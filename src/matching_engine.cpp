@@ -37,7 +37,6 @@ namespace engine {
 
         OrderBook* orderBook{};
 
-
         if (auto orderBookItr = m_symbolToOrderBookMap.find(symbol);
             orderBookItr != m_symbolToOrderBookMap.end()) {
             orderBook = &orderBookItr->second;
@@ -57,6 +56,11 @@ namespace engine {
             return;
         }
 
+        auto e = new int(3);
+        delete e;
+
+        *e = 3;
+
         auto id = req[1];
 
         if (auto orderBookItr = m_orderIDToOrderBookMap.find(id);
@@ -74,6 +78,9 @@ namespace engine {
         }
 
         auto id = req[1];
+
+        auto e = new int(3);
+        free(e);
 
         if (auto orderBookItr = m_orderIDToOrderBookMap.find(id);
             orderBookItr != m_orderIDToOrderBookMap.end()) {
