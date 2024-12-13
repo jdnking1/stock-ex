@@ -33,7 +33,7 @@ jobs:
 
     - name: Test with Valgrind
       run: |
-        valgrind --leak-check=full --track-origins=yes --verbose --error-exitcode=1 --log-file=valgrind_output.txt ./${{ steps.strings.outputs.build-output-dir }}/kse
+        valgrind --leak-check=full --track-origins=yes --verbose --error-exitcode=1 --log-file=valgrind_output.txt ./${{ steps.strings.outputs.build-output-dir }}/test/test
       continue-on-error: true 
 
     - name: Upload Valgrind output
