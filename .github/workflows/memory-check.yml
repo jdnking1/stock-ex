@@ -1,0 +1,44 @@
+name: Valgrind Memory Check
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  valgrind-check:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install Valgrind
+      run: sudo apt-get update && sudo apt-get install -y valgrind
+
+    - name: Set reusable strings
+      id: strings
+      shell: bash
+      run: |
+        echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
+
+    - name: Configure CMake
+      run: >
+        cmake -B ${{ steps.strings.outputs.build-output-dir }}
+        -DCMAKE_BUILD_TYPE=Release
+        -S ${{ github.workspace }}
+
+    - name: Build
+      run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config Release
+
+    - name: Test with Valgrind
+      run: |
+        # Running Valgrind to check for memory leaks, invalid reads/writes, and thread issues
+        valgrind --leak-check=full --track-origins=yes --verbose --error-exitcode=1 --log-file=valgrind_output.txt ./${{ steps.strings.outputs.build-output-dir }}/your_executable
+      continue-on-error: true # Continue the workflow even if Valgrind detects issues
+
+    - name: Upload Valgrind output
+      uses: actions/upload-artifact@v3
+      with:
+        name: valgrind-log
+        path: valgrind_output.txt
