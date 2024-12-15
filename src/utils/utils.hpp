@@ -17,7 +17,7 @@ namespace kse::utils {
 		}
 	}
 
-	inline auto DEBUG_ASSERT(bool condition, std::string_view message) noexcept {
+	inline auto DEBUG_ASSERT(bool condition [[maybe_unused]], std::string_view message[[maybe_unused]] ) noexcept {
 	#ifndef NDEBUG
 		ASSERT(condition, message);
 	#endif
