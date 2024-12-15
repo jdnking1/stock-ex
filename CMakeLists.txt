@@ -11,6 +11,12 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
+if(WIN32)
+    add_definitions(-D_WIN32)
+elseif(UNIX)
+    add_definitions(-D__linux__)
+endif()
+
 set(COMPILER_SPECIFIC_FLAGS "")
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     set(COMPILER_SPECIFIC_FLAGS "-Wall -Wextra -Werror -Wpedantic")
