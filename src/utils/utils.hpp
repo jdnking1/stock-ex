@@ -17,6 +17,12 @@ namespace kse::utils {
 		}
 	}
 
+	inline auto DEBUG_ASSERT(bool condition, std::string_view message) noexcept {
+	#ifndef NDEBUG
+		ASSERT(condition, message);
+	#endif
+	}
+
 	inline auto FATAL(std::string_view message) noexcept {
 		std::cerr << message << std::endl;
 		exit(EXIT_FAILURE);
