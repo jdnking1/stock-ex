@@ -1,4 +1,4 @@
-add_library(src "main.cpp" "matching_engine.cpp" "order_book.cpp" "order.cpp" "common.cpp" "engine_utils.cpp" "utils/utils.cpp")
+add_library(src "main.cpp" "matching_engine.cpp" "order_book.cpp" "order.cpp" "common.cpp" "engine_utils.cpp")
  
 add_subdirectory(utils)
 

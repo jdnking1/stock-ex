@@ -4,8 +4,7 @@
 #include <iostream>
 #include <string_view>
 #include <thread>
-#include <format>
-#include <memory>
+
 
 namespace kse::utils {
 
@@ -60,7 +59,7 @@ namespace kse::utils {
 		return std::thread{ 
 			[core, func = std::forward<T>(func)](A&&... forwardedArgs) mutable {
 				if (core >= 0 && !pin_thread(core)) {
-					FATAL(std::format("Failed to pin thread to core {}", core));
+					FATAL("Failed to pin thread to core " + std::to_string(core));
 				}
 				func(std::forward<A>(forwardedArgs)...);
 			},

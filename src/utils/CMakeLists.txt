@@ -10,4 +10,4 @@ if(UNIX)
     target_link_libraries(libutils INTERFACE pthread)
 endif()
 
-add_executable(thread_example utils.cpp "thread_example.cpp")
+add_executable(thread_example  "thread_example.cpp")
