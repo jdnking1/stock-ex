@@ -1,4 +1,5 @@
 #include "utils.hpp"
+#include "logger.hpp"
 
 auto dummyFunction(int a, int b, bool sleep) {
     std::cout << "dummyFunction(" << a << "," << b << ")" << std::endl;
@@ -21,8 +22,6 @@ int main() {
     auto t2 = create_thread(1, dummyFunction, 15, 51, true);
 
     std::cout << "main waiting for threads to be done." << std::endl;
-    t1.join();
-    t2.join();
     std::cout << "main exiting." << std::endl;
 
     return 0;
