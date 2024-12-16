@@ -4,7 +4,7 @@ struct MyStruct {
     int d_[3];
 };
 
-int main(int, char**) {
+int main() {
     using namespace kse::utils;
 
     memory_pool<double> prim_pool(50);

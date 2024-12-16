@@ -13,3 +13,5 @@ endif()
 add_executable(thread_example  "thread_example.cpp")
 
 add_executable(memory_pool_example "memory_pool_example.cpp")
+
+add_executable(lock_free_queue_example "lock_free_queue_example.cpp")
