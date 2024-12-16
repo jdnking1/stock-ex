@@ -1,16 +1,16 @@
 #pragma once
 
 #include <chrono>
+
+#include <ctime>
+
+#include <cstdio>
 #include <cstdlib>
 #include <cstdint>
 #include <iostream>
 #include <string>
 #include <string_view>
 #include <thread>
-
-
-#include <time.h>
-#include <stdio.h>
 
 
 namespace kse::utils {
@@ -96,20 +96,26 @@ namespace kse::utils {
 		const auto clock = std::chrono::system_clock::now();
 		const auto time = std::chrono::system_clock::to_time_t(clock);
 
-		char nanos_str[26];
+		char buffer[26];
+		struct tm tm_time;
+#ifdef _WIN32
+		localtime_s(&tm_time, &time);
+#else
+		localtime_r(&time, &tm_time);
+#endif
+		std::strftime(buffer, sizeof(buffer), "%c", &tm_time);
+#ifdef _WIN32
+		sprintf_s(buffer, sizeof(buffer), "%.8s.%09lld", buffer + 11,
+			std::chrono::duration_cast<std::chrono::nanoseconds>(clock.time_since_epoch()).count() % NANOS_PER_SECS);
+#else
+		std::snprintf(buffer, sizeof(buffer), "%.8s.%09ld",
+			std::asctime(&tm_time) + 11,
+			std::chrono::duration_cast<std::chrono::nanoseconds>(clock.time_since_epoch()).count() % NANOS_PER_SECS);
+#endif
+		
 
-		struct tm tm_time = {};
-		errno_t err = ctime_s(nanos_str, sizeof(nanos_str), &time);
+		time_str->assign(buffer);
 
-		if (err != 0) [[unlikely]] {
-			time_str->assign("Error formatting time using ctime_s.");
-		}
-		else {
-			sprintf_s(nanos_str, sizeof(nanos_str), "%.8s.%09lld", nanos_str + 11,
-				std::chrono::duration_cast<std::chrono::nanoseconds>(clock.time_since_epoch()).count() % NANOS_PER_SECS);
-
-			time_str->assign(nanos_str);
-		}
 
 		return *time_str;
 	}

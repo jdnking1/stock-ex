@@ -2,6 +2,8 @@
 
 #include <atomic>
 #include <cstdint>
+
+#include <cstring>
 #include <string>
 #include <fstream>
 #include <thread>
@@ -163,12 +165,22 @@ namespace kse::utils {
 		auto push_value(const char* value) noexcept {
 			log_entry l{ log_type::STRING, {.s = {}} };
 
+#ifdef _WIN32
 			errno_t err = strncpy_s(l.data_.s, sizeof(l.data_.s), value, _TRUNCATE);
 
 			if (err == 0) {
 				push_value(l);
 			}
+#else
+			if (value) {
+				std::strncpy(l.data_.s, value, sizeof(l.data_.s) - 1);
+				l.data_.s[sizeof(l.data_.s) - 1] = '\0';
+				push_value(l);
+			}
+#endif
+			
 		}
+
 
 		auto push_value(const std::string& value) noexcept {
 			push_value(value.c_str());
