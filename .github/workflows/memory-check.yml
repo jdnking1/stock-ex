@@ -34,10 +34,15 @@ jobs:
     - name: Test with Valgrind
       run: |
         valgrind --leak-check=full --track-origins=yes --verbose --error-exitcode=1 --log-file=valgrind_output.txt ${{ steps.strings.outputs.build-output-dir }}/test/test
+        valgrind --leak-check=full --track-origins=yes --verbose --error-exitcode=1 --log-file=valgrind_output_lfq.txt ${{ steps.strings.outputs.build-output-dir }}/src/utils/lock_free_queue_example
+        valgrind --leak-check=full --track-origins=yes --verbose --error-exitcode=1 --log-file=valgrind_output_mp.txt ${{ steps.strings.outputs.build-output-dir }}/src/utils/memory_pool_example
       continue-on-error: true 
 
-    - name: Upload Valgrind output
+    - name: Upload Valgrind outputs
       uses: actions/upload-artifact@v3
       with:
-        name: valgrind-log
-        path: valgrind_output.txt
+        name: valgrind-logs
+        path: |
+          valgrind_output.txt
+          valgrind_output_lfq.txt
+          valgrind_output_mp.txt
