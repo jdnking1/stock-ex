@@ -12,15 +12,25 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-  
-    - name: Install Boost (Linux)
-      if: runner.os == 'Linux'
+
+    # Cache Boost on Linux
+    - name: Cache Boost
+      uses: actions/cache@v3
+      with:
+        path: ~/boost-install-dir
+        key: ${{ runner.os }}-boost-1.87
+        restore-keys: |
+          ${{ runner.os }}-boost-
+
+    # Install Boost only if cache is missing
+    - name: Install Boost
+      if: runner.os == 'Linux' && !steps.cache.outputs.cache-hit
       run: |
         curl -L https://boostorg.jfrog.io/artifactory/main/release/1.87.0/source/boost_1_87_0.tar.gz -o boost.tar.gz
         tar -xf boost.tar.gz
         cd boost_1_87_0
         ./bootstrap.sh
-        ./b2 install --prefix=boost-install-dir
+        ./b2 install --prefix=~/boost-install-dir
 
     - name: Install Valgrind
       run: sudo apt-get update && sudo apt-get install -y valgrind
@@ -46,7 +56,7 @@ jobs:
         valgrind --leak-check=full --track-origins=yes --verbose --error-exitcode=1 --log-file=valgrind_output_lfq.txt ${{ steps.strings.outputs.build-output-dir }}/src/utils/lock_free_queue_example
         valgrind --leak-check=full --track-origins=yes --verbose --error-exitcode=1 --log-file=valgrind_output_mp.txt ${{ steps.strings.outputs.build-output-dir }}/src/utils/memory_pool_example
         valgrind --leak-check=full --track-origins=yes --verbose --error-exitcode=1 --log-file=valgrind_output_lg.txt ${{ steps.strings.outputs.build-output-dir }}/src/utils/logger_example
-      continue-on-error: true 
+      continue-on-error: true
 
     - name: Upload Valgrind outputs
       uses: actions/upload-artifact@v3
