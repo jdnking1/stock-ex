@@ -37,29 +37,19 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    # Cache Boost on Linux
-    - name: Cache Boost (Linux)
-      if: runner.os == 'Linux'
+    - name: Restore Boost Cache
+      id: boost-cache
       uses: actions/cache@v3
       with:
-        path: ~/boost-install-dir
+        path: |
+          ~/boost-install-dir
+          C:\boost-install-dir
         key: ${{ runner.os }}-boost-1.87
         restore-keys: |
           ${{ runner.os }}-boost-
 
-    # Cache Boost on Windows
-    - name: Cache Boost (Windows)
-      if: runner.os == 'Windows'
-      uses: actions/cache@v3
-      with:
-        path: C:\boost-install-dir
-        key: ${{ runner.os }}-boost-1.87
-        restore-keys: |
-          ${{ runner.os }}-boost-
-
-    # Install Boost only if cache is missing
     - name: Install Boost (Linux)
-      if: runner.os == 'Linux' && !steps.cache.outputs.cache-hit
+      if: runner.os == 'Linux' && !steps.boost-cache.outputs.cache-hit
       run: |
         curl -L https://boostorg.jfrog.io/artifactory/main/release/1.87.0/source/boost_1_87_0.tar.gz -o boost.tar.gz
         tar -xf boost.tar.gz
@@ -68,13 +58,22 @@ jobs:
         ./b2 install --prefix=~/boost-install-dir
 
     - name: Install Boost (Windows)
-      if: runner.os == 'Windows' && !steps.cache.outputs.cache-hit
+      if: runner.os == 'Windows' && !steps.boost-cache.outputs.cache-hit
       run: |
         curl -L https://boostorg.jfrog.io/artifactory/main/release/1.87.0/source/boost_1_87_0.zip -o boost.zip
         tar -xf boost.zip
         cd boost_1_87_0
-        ./bootstrap.bat
-        ./b2.exe install --prefix=C:\boost-install-dir
+        bootstrap.bat
+        b2 install --prefix=C:\boost-install-dir
+
+    - name: Save Boost Cache
+      if: steps.boost-cache.outputs.cache-hit == true
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/boost-install-dir
+          C:\boost-install-dir
+        key: ${{ runner.os }}-boost-1.87
 
     - name: Set reusable strings
       id: strings
