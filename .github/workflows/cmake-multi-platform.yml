@@ -63,8 +63,8 @@ jobs:
         curl -L https://boostorg.jfrog.io/artifactory/main/release/1.87.0/source/boost_1_87_0.zip -o boost.zip
         tar -xf boost.zip
         cd boost_1_87_0
-        bootstrap.bat
-        b2 install --prefix=C:\boost-install-dir
+        ./bootstrap.bat
+        ./b2.exe install --prefix=C:\boost-install-dir
 
     - name: Save Boost Cache
       if: steps.boost-cache.outputs.cache-hit == true
