@@ -1,13 +1,12 @@
 #pragma once
 
 #include <chrono>
-
 #include <ctime>
-
 #include <cstdio>
 #include <cstdlib>
 #include <cstdint>
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <string_view>
 #include <thread>
@@ -120,4 +119,25 @@ namespace kse::utils {
 		return *time_str;
 	}
 
+	struct socket_config {
+		std::string ip_address_;
+		std::string interface_;
+		int port_ = -1;
+		bool is_udp_ = false;
+		bool is_listening_ = false;
+		bool needs_timestamp_ = false;
+
+		auto toString() const {
+			std::stringstream ss;
+			ss << "SocketCfg[ip:" << ip_address_
+				<< " iface:" << interface_
+				<< " port:" << port_
+				<< " is_udp:" << is_udp_
+				<< " is_listening:" << is_listening_
+				<< " needs_SO_timestamp:" << needs_timestamp_
+				<< "]";
+
+			return ss.str();
+		}
+	};
 }
