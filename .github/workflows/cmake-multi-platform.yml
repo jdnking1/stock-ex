@@ -13,15 +13,8 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     strategy:
-      # Set fail-fast to false to ensure that feedback is delivered for all matrix combinations. Consider changing this to true when your workflow is stable.
+    
       fail-fast: false
-
-      # Set up a matrix to run the following 3 configurations:
-      # 1. <Windows, Release, latest MSVC compiler toolchain on the default runner image, default generator>
-      # 2. <Linux, Release, latest GCC compiler toolchain on the default runner image, default generator>
-      # 3. <Linux, Release, latest Clang compiler toolchain on the default runner image, default generator>
-      #
-      # To add more build types (Release, Debug, RelWithDebInfo, etc.) customize the build_type list.
       matrix:
         os: [ubuntu-latest, windows-latest]
         build_type: [Release]
@@ -46,6 +39,24 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+  
+    - name: Install Boost (Linux)
+      if: runner.os == 'Linux'
+      run: |
+        curl -L https://boostorg.jfrog.io/artifactory/main/release/1.87.0/source/boost_1_87_0.tar.gz -o boost.tar.gz
+        tar -xf boost.tar.gz
+        cd boost_1_87_0
+        ./bootstrap.sh
+        ./b2 install --prefix=boost-install-dir
+
+    - name: Install Boost (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        curl -L https://boostorg.jfrog.io/artifactory/main/release/1.87.0/source/boost_1_87_0.zip -o boost.zip
+        tar -xf boost.zip
+        cd boost_1_87_0
+        bootstrap.bat
+        b2 install --prefix=boost-install-dir
 
     - name: Set reusable strings
       # Turn repeated input strings (such as the build output directory) into step outputs. These step outputs can be used throughout the workflow file.
