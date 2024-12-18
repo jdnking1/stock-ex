@@ -92,3 +92,4 @@ jobs:
           ctest --test-dir ${{ steps.strings.outputs.build-output-dir }}/test --build-config ${{ matrix.build_type }}
         else
           echo "Test directory not found. Skipping tests."
+        fi
