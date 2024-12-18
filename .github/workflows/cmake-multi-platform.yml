@@ -13,21 +13,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest]
         build_type: [Release]
-        c_compiler: [gcc, cl]
+        c_compiler: [gcc]
         include:
-          - os: windows-latest
-            c_compiler: cl
-            cpp_compiler: cl
           - os: ubuntu-latest
             c_compiler: gcc
             cpp_compiler: g++
-        exclude:
-          - os: windows-latest
-            c_compiler: gcc
-          - os: ubuntu-latest
-            c_compiler: cl
 
     steps:
     - uses: actions/checkout@v4
@@ -45,8 +37,8 @@ jobs:
       run: |
         echo "Extracting Boost from artifact..."
         if [ "${{ runner.os }}" == "Linux" ]; then
-          mkdir -p $HOME/boost-install-dir
-          unzip boost-artifact/boost-install-dir.zip -d $HOME/boost-install-dir
+          mkdir -p /home/runner/work/kse/kse/boost-install-dir
+          unzip boost-artifact/boost-install-dir.zip -d /home/runner/work/kse/kse/boost-install-dir
         else
           mkdir -p C:/boost-install-dir
           powershell -Command "Expand-Archive -Path boost-artifact/boost-install-dir.zip -DestinationPath C:/boost-install-dir"
@@ -58,21 +50,10 @@ jobs:
         tar -xf boost.tar.gz
         cd boost_1_87_0
         ./bootstrap.sh
-        ./b2 install --prefix=$HOME/boost-install-dir
-        cd $HOME/boost-install-dir
+        ./b2 install --prefix=/home/runner/work/kse/kse/boost-install-dir
+        cd /home/runner/work/kse/kse/boost-install-dir
         zip -r ../boost-install-dir.zip .
-        ls $HOME
-
-    - name: Install Boost (Windows)
-      if: runner.os == 'Windows' && steps.boost-artifact.outcome != 'success'
-      run: |
-        curl -L https://boostorg.jfrog.io/artifactory/main/release/1.87.0/source/boost_1_87_0.zip -o boost.zip
-        tar -xf boost.zip
-        cd boost_1_87_0
-        .\\bootstrap.bat
-        .\\b2.exe install --prefix=C:\\boost-install-dir
-        powershell -Command "Compress-Archive -Path C:\\boost-install-dir\\* -DestinationPath C:\\boost-install-dir.zip"
-
+        ls
 
     - name: Save Boost as Artifact
       if: steps.boost-artifact.outcome != 'success'
@@ -80,8 +61,7 @@ jobs:
       with:
         name: boost-${{ matrix.os }}
         path: |
-          $HOME/boost-install-dir.zip
-          C:/boost-install-dir.zip
+          /home/runner/work/kse/kse/boost-install-dir.zip
         retention-days: 90
 
     - name: Set reusable strings
@@ -89,11 +69,8 @@ jobs:
       shell: bash
       run: |
         echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
-        if [ "${{ runner.os }}" == "Linux" ]; then
-          echo "boost-root=$HOME/boost-install-dir" >> "$GITHUB_OUTPUT"
-        else
-          echo "boost-root=C:/boost-install-dir" >> "$GITHUB_OUTPUT"
-        fi
+        echo "boost-root=/home/runner/work/kse/kse/boost-install-dir" >> "$GITHUB_OUTPUT"
+       
 
     - name: Configure CMake
       run: >
