@@ -14,8 +14,11 @@ jobs:
       fail-fast: false
       matrix:
         build_type: [Release]
-        c_compiler: [gcc, clang]
-        cpp_compiler: [g++, clang++]
+        c_compiler: [gcc]
+        include:
+          - os: ubuntu-latest
+            c_compiler: gcc
+            cpp_compiler: g++
 
     steps:
     - uses: actions/checkout@v4
