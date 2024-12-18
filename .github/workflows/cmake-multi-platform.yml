@@ -46,7 +46,7 @@ jobs:
       continue-on-error: true
 
     - name: Extract Boost Artifact
-      if: success()
+      if: steps.boost-artifact.outcome == 'success'
       run: |
         echo "Extracting Boost from artifact..."
         tar -xvf boost-artifact/boost.tar.gz -C $HOME || mkdir -p $HOME/boost-install-dir
@@ -56,7 +56,7 @@ jobs:
         ls $HOME/boost-install-dir || ls C:/boost-install-dir
 
     - name: Install Boost (Linux)
-      if: runner.os == 'Linux' && !success()
+      if: runner.os == 'Linux' && steps.boost-artifact.outcome != 'success'
       run: |
         curl -L https://boostorg.jfrog.io/artifactory/main/release/1.87.0/source/boost_1_87_0.tar.gz -o boost.tar.gz
         tar -xf boost.tar.gz
@@ -65,7 +65,7 @@ jobs:
         ./b2 install --prefix=~/boost-install-dir
 
     - name: Install Boost (Windows)
-      if: runner.os == 'Windows' && !success()
+      if: runner.os == 'Windows' && steps.boost-artifact.outcome != 'success'
       run: |
         curl -L https://boostorg.jfrog.io/artifactory/main/release/1.87.0/source/boost_1_87_0.zip -o boost.zip
         tar -xf boost.zip
@@ -74,7 +74,7 @@ jobs:
         b2.exe install --prefix=C:/boost-install-dir
 
     - name: Save Boost as Artifact
-      if: success() == false
+      if: steps.boost-artifact.outcome != 'success'
       uses: actions/upload-artifact@v3
       with:
         name: boost-${{ matrix.os }}
