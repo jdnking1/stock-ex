@@ -49,13 +49,12 @@ jobs:
       if: steps.boost-artifact.outcome == 'success'
       run: |
         echo "Extracting Boost from artifact..."
-        if [ "${{ runner.os }}" == "Windows" ]; then
-          mkdir -p C:/boost-install-dir
-          tar -xvf boost-artifact/boost.tar.gz -C C:/boost-install-dir
-        else
+        if [ "${{ runner.os }}" == "Linux" ]; then
           mkdir -p $HOME/boost-install-dir
-          tar -xvf boost-artifact/boost.tar.gz -C $HOME/boost-install-dir
-        fi
+          unzip boost-artifact/boost-install-dir.zip -d $HOME/boost-install-dir
+        else
+          mkdir -p C:/boost-install-dir
+          powershell -Command "Expand-Archive -Path boost-artifact/boost-install-dir.zip -DestinationPath C:/boost-install-dir"
 
     - name: Install Boost (Linux)
       if: runner.os == 'Linux' && steps.boost-artifact.outcome != 'success'
@@ -65,6 +64,8 @@ jobs:
         cd boost_1_87_0
         ./bootstrap.sh
         ./b2 install --prefix=$HOME/boost-install-dir
+        cd $HOME/boost-install-dir
+        zip -r ../boost-install-dir.zip .
 
     - name: Install Boost (Windows)
       if: runner.os == 'Windows' && steps.boost-artifact.outcome != 'success'
@@ -74,6 +75,8 @@ jobs:
         cd boost_1_87_0
         .\\bootstrap.bat
         .\\b2.exe install --prefix=C:\\boost-install-dir
+        powershell -Command "Compress-Archive -Path C:\\boost-install-dir\\* -DestinationPath C:\\boost-install-dir.zip"
+
 
     - name: Save Boost as Artifact
       if: steps.boost-artifact.outcome != 'success'
@@ -81,8 +84,8 @@ jobs:
       with:
         name: boost-${{ matrix.os }}
         path: |
-          $HOME/boost-install-dir
-          C:/boost-install-dir
+          $HOME/boost-install-dir.zip
+          C:/boost-install-dir.zip
         retention-days: 90
 
     - name: Set reusable strings
