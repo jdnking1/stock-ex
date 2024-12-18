@@ -32,14 +32,13 @@ jobs:
       uses: actions/download-artifact@v3
       with:
         name: poco
-        path: poco-artifact
       continue-on-error: true
 
     - name: Extract Boost Artifact
       if: steps.poco-artifact.outcome == 'success'
       run: |
         echo "Extracting Boost from artifact..."
-        unzip poco-artifact/poco.zip
+        unzip poco.zip
        
     - name: Install Poco
       if: steps.poco-artifact.outcome != 'success'
