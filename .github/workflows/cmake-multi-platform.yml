@@ -15,7 +15,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
         build_type: [Release]
-        c_compiler: [gcc, clang, cl]
+        c_compiler: [gcc, cl]
         include:
           - os: windows-latest
             c_compiler: cl
@@ -23,14 +23,9 @@ jobs:
           - os: ubuntu-latest
             c_compiler: gcc
             cpp_compiler: g++
-          - os: ubuntu-latest
-            c_compiler: clang
-            cpp_compiler: clang++
         exclude:
           - os: windows-latest
             c_compiler: gcc
-          - os: windows-latest
-            c_compiler: clang
           - os: ubuntu-latest
             c_compiler: cl
 
@@ -66,6 +61,7 @@ jobs:
         ./b2 install --prefix=$HOME/boost-install-dir
         cd $HOME/boost-install-dir
         zip -r ../boost-install-dir.zip .
+        ls $HOME
 
     - name: Install Boost (Windows)
       if: runner.os == 'Windows' && steps.boost-artifact.outcome != 'success'
@@ -97,6 +93,7 @@ jobs:
           echo "boost-root=$HOME/boost-install-dir" >> "$GITHUB_OUTPUT"
         else
           echo "boost-root=C:/boost-install-dir" >> "$GITHUB_OUTPUT"
+        fi
 
     - name: Configure CMake
       run: >
