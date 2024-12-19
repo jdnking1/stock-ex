@@ -14,11 +14,14 @@ jobs:
       fail-fast: false
       matrix:
         build_type: [Release]
-        c_compiler: [gcc]
+        c_compiler: [gcc, clang]
         include:
           - os: ubuntu-latest
             c_compiler: gcc
             cpp_compiler: g++
+          - os: ubuntu-latest
+            c_compiler: clang
+            cpp_compiler: clang++
 
     steps:
     - uses: actions/checkout@v4
@@ -26,22 +29,8 @@ jobs:
     - name: Install deps
       run: >
         sudo apt-get -y update && sudo apt-get -y install git libssl-dev libmysqlclient-dev libpq-dev
-        
-    - name: Download Poco Artifact
-      id: poco-artifact
-      uses: actions/download-artifact@v3
-      with:
-        name: poco
-      continue-on-error: true
-
-    - name: Extract Boost Artifact
-      if: steps.poco-artifact.outcome == 'success'
-      run: |
-        echo "Extracting Boost from artifact..."
-        unzip poco.zip
        
     - name: Install Poco
-      if: steps.poco-artifact.outcome != 'success'
       run: |
         sudo apt-get -y update && sudo apt-get -y install git libssl-dev libmysqlclient-dev libpq-dev
         git clone -b main https://github.com/pocoproject/poco.git
@@ -55,16 +44,7 @@ jobs:
         zip -r poco.zip poco
         
         echo "Poco_DIR=${{ github.workspace }}/poco/cmake-build/Poco" >> $GITHUB_ENV
-
-    - name: Save Boost as Artifact
-      if: steps.poco-artifact.outcome != 'success'
-      uses: actions/upload-artifact@v3
-      with:
-        name: poco
-        path: |
-          ${{ github.workspace }}/poco.zip
-        retention-days: 90
-        
+    
     - name: Set reusable strings
       id: strings
       shell: bash

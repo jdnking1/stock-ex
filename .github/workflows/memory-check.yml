@@ -13,38 +13,22 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Download Boost Artifact
-      id: boost-artifact
-      uses: actions/download-artifact@v3
-      with:
-        name: boost-${{ runner.os }}
-        path: boost-artifact
-      continue-on-error: true
-
-    - name: Extract Boost Artifact
-      if: steps.boost-artifact.outcome == 'success'
+    - name: Install deps
+      run: >
+        sudo apt-get -y update && sudo apt-get -y install git libssl-dev libmysqlclient-dev libpq-dev
+       
+    - name: Install Poco
       run: |
-        echo "Extracting Boost from artifact..."
-        tar -xvf boost-artifact/boost.tar.gz -C $HOME || mkdir -p $HOME/boost-install-dir
-        ls $HOME/boost-install-dir
-
-    - name: Install Boost (Linux)
-      if: steps.boost-artifact.outcome != 'success'
-      run: |
-        curl -L https://boostorg.jfrog.io/artifactory/main/release/1.87.0/source/boost_1_87_0.tar.gz -o boost.tar.gz
-        tar -xf boost.tar.gz
-        cd boost_1_87_0
-        ./bootstrap.sh
-        ./b2 install --prefix=~/boost-install-dir
-
-    - name: Save Boost as Artifact
-      if: steps.boost-artifact.outcome != 'success'
-      uses: actions/upload-artifact@v3
-      with:
-        name: boost-${{ runner.os }}
-        path: ~/boost-install-dir
-        retention-days: 30
-
+        sudo apt-get -y update && sudo apt-get -y install git libssl-dev libmysqlclient-dev libpq-dev
+        git clone -b main https://github.com/pocoproject/poco.git
+        cd poco
+        mkdir cmake-build
+        cd cmake-build
+        cmake ..
+        cmake --build . --config Release
+        
+        echo "Poco_DIR=${{ github.workspace }}/poco/cmake-build/Poco" >> $GITHUB_ENV
+    
     - name: Install Valgrind
       run: sudo apt-get update && sudo apt-get install -y valgrind
 
@@ -53,15 +37,15 @@ jobs:
       shell: bash
       run: |
         echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
-        echo "boost-root=~/boost-install-dir" >> "$GITHUB_OUTPUT"
+        echo "poco-dir=${{ github.workspace }}/poco/cmake-build/Poco" >> "$GITHUB_OUTPUT"
 
     - name: Configure CMake
       run: >
         cmake -B ${{ steps.strings.outputs.build-output-dir }}
-        -DCMAKE_CXX_COMPILER=g++
-        -DCMAKE_C_COMPILER=gcc
-        -DCMAKE_BUILD_TYPE=Release
-        -DBOOST_ROOT=${{ steps.strings.outputs.boost-root }}
+        -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
+        -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
+        -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+        -DPoco_DIR=${{ steps.strings.outputs.poco-dir }}
         -S ${{ github.workspace }}
 
     - name: Build
