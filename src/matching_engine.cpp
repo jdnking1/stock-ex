@@ -30,8 +30,6 @@ namespace engine {
             return;
         }
 
-        auto l = new std::string[req.size()];
-
         auto order = makeOrder(req);
         auto symbol = std::move(req[2]);
 
@@ -52,7 +50,7 @@ namespace engine {
 
 
     void Engine::amend(std::vector<std::string> req) {
-        if (req.size() != 4, utils::invalidPriceOrQty(req[2], req[3])) {
+        if (req.size() != 4 || utils::invalidPriceOrQty(req[2], req[3])) {
             return;
         }
 
