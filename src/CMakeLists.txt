@@ -1,5 +1,6 @@
-add_library(src "main.cpp" "matching_engine.cpp" "order_book.cpp" "order.cpp" "common.cpp" "engine_utils.cpp")
- 
-add_subdirectory(utils)
+file(GLOB SOURCES "*/*.cpp")
 
-target_include_directories(src PUBLIC .)
+include_directories(${PROJECT_SOURCE_DIR})
+include_directories(${PROJECT_SOURCE_DIR}/src)
+
+add_library(libexchange STATIC ${SOURCES})

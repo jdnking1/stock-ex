@@ -1,8 +1,6 @@
-#include "main.hpp"
-#include "matching_engine.hpp"
+#include <iostream>
 
-std::vector<std::string> run(std::vector<std::string> const& input) {
-    auto engine = engine::Engine();
-    engine.run(input);
-    return engine.generateOutput();
+int main() {
+	std::cout << "K.S.E (King Stock Exchange)!\n";
+	return 0;
 }

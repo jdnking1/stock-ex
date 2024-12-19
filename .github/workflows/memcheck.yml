@@ -38,7 +38,8 @@ jobs:
         cmake ..
         cmake --build . --config Release
         
-        echo "Poco_DIR=${{ github.workspace }}/poco/cmake-build/Poco" >> $GITHUB_ENV
+        echo "Poco_FOUNDATION_INCLUDE=${{ github.workspace }}/poco/Foundation/include" >> $GITHUB_ENV
+        echo "Poco_NET_INCLUDE=${{ github.workspace }}/poco/Net/include" >> $GITHUB_ENV
     
     - name: Install Valgrind
       run: sudo apt-get update && sudo apt-get install -y valgrind

@@ -29,5 +29,15 @@ endif()
 
 string(APPEND CMAKE_CXX_FLAGS " ${COMPILER_SPECIFIC_FLAGS}")
 
+list(APPEND LIBS libutils)
+list(APPEND LIBS libexchange)
+
+include_directories(${PROJECT_SOURCE_DIR})
+include_directories(${PROJECT_SOURCE_DIR}/src)
+
+add_subdirectory(utils)
 add_subdirectory(src)
 add_subdirectory(test)
+
+add_executable(kse src/main.cpp)
+target_link_libraries(kse PUBLIC ${LIBS})
