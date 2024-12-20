@@ -11,9 +11,6 @@
 
 namespace kse::utils {
 	template<typename T>
-	concept default_constructible = std::is_default_constructible_v<T>;
-
-	template<default_constructible T>
 	class lock_free_queue {
 	public:
 		explicit lock_free_queue(size_t size) : data_(size, T()) {}

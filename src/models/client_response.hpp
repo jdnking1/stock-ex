@@ -47,7 +47,7 @@ namespace kse::models {
         quantity_t exec_qty_ = INVALID_QUANTITY;
         quantity_t leaves_qty_ = INVALID_QUANTITY;
 
-        auto toString() const {
+        auto to_string() const {
             std::stringstream ss;
             ss << "MEClientRequest"
                 << " ["
