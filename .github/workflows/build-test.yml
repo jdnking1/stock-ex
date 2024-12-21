@@ -39,11 +39,9 @@ jobs:
         cd cmake-build
         cmake ..
         cmake --build . --config Release
-        cd ..
-        cd ..
-        zip -r poco.zip poco
-        
-        echo "Poco_DIR=${{ github.workspace }}/poco/cmake-build/Poco" >> $GITHUB_ENV
+        echo "Poco_FOUNDATION_INCLUDE=${{ github.workspace }}/poco/Foundation/include" >> $GITHUB_ENV
+        echo "Poco_NET_INCLUDE=${{ github.workspace }}/poco/Net/include" >> $GITHUB_ENV
+
     
     - name: Set reusable strings
       id: strings
