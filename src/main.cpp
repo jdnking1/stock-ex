@@ -21,7 +21,7 @@ void signal_handler(int) {
 }
 
 
-int main(int, char**) {
+int main() {
     logger = new kse::utils::logger("kse.log");
 
     std::signal(SIGINT, signal_handler);

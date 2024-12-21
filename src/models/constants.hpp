@@ -13,8 +13,8 @@ namespace kse::models {
 	/// Maximum trading clients.
 	constexpr size_t MAX_NUM_CLIENTS = 256;
 
-	/// Maximum number of orders per trading client.
-	constexpr size_t MAX_ORDER_PER_CLIENT = 1024 * 1024;
+	/// Maximum number of orders
+	constexpr size_t MAX_NUM_ORDERS = 1024 * 1024;
 
 	/// Maximum price level depth in the order books.
 	constexpr size_t MAX_PRICE_LEVELS = 256;

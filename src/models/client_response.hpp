@@ -15,8 +15,10 @@ namespace kse::models {
         INVALID = 0,
         ACCEPTED = 1,
         CANCELED = 2,
-        FILLED = 3,
-        CANCEL_REJECTED = 4
+        MODIFIED = 3,
+        FILLED = 4,
+        CANCEL_REJECTED = 5,
+        MODIFY_REJECTED = 6
     };
 
     inline std::string client_response_type_to_string(client_response_type type) {
@@ -29,6 +31,10 @@ namespace kse::models {
             return "FILLED";
         case client_response_type::CANCEL_REJECTED:
             return "CANCEL_REJECTED";
+        case client_response_type::MODIFIED:
+            return "MODIFIED";
+        case client_response_type::MODIFY_REJECTED:
+            return "MODIFY_REJECTED";
         case client_response_type::INVALID:
             return "INVALID";
         }

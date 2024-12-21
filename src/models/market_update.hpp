@@ -2,7 +2,6 @@
 
 #include <sstream>
 
-
 #include "constants.hpp"
 #include "basic_types.hpp"
 

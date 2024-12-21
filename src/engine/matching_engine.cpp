@@ -4,11 +4,11 @@
 #include <chrono>
 
 kse::engine::matching_engine::matching_engine(models::client_request_queue* client_requests, models::client_response_queue* client_responses, models::market_update_queue* market_updates):
-	incoming_requests_(client_requests), outgoing_responses_(client_responses), outgoing_market_updates_(market_updates), logger_("matching_engine.log")
+	incoming_requests_{ client_requests }, outgoing_responses_{ client_responses }, outgoing_market_updates_{ market_updates }, logger_{ "matching_engine.log" }, message_handler_{ outgoing_responses_, outgoing_market_updates_, &logger_ }
 {
-	/*std::ranges::for_each(instrument_order_books_, [](std::unique_ptr<order_book>& order_book) {
-
-	});*/
+	for (models::instrument_id_t i = 0; i < instrument_order_books_.size(); i++) {
+		instrument_order_books_.at(i) = std::make_unique<kse::engine::order_book>(i, &logger_, &message_handler_);
+	}
 }
 
 kse::engine::matching_engine::~matching_engine()
