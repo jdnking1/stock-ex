@@ -8,7 +8,7 @@ endif()
 
 if(NOT LIBUV_LIBRARIES)
 	message(WARNING "LIBUV_LIBRARIES is empty. Attempting to use the system environment variable LIBUV_LIBRARIES.")
-	set(LIBUV_LIBRARIES $ENV{LIBUV_LIBRARIES})
+	set(LIBUV_LIBRARIES $ENV{LIBUV_LIBRARIES}/uv.lib)
 	if(LIBUV_LIBRARIES)
 		message(STATUS "Using LIBUV_LIBRARIES from environment: ${LIBUV_LIBRARIES}")
 	else()
