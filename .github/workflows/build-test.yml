@@ -27,40 +27,37 @@ jobs:
     - uses: actions/checkout@v4
     
     - name: Install deps
-      run: >
-        sudo apt-get -y update && sudo apt-get -y install git libssl-dev libmysqlclient-dev libpq-dev
-       
-    - name: Install Poco
       run: |
-        sudo apt-get -y update && sudo apt-get -y install git libssl-dev libmysqlclient-dev libpq-dev
-        git clone -b main https://github.com/pocoproject/poco.git
-        cd poco
-        mkdir cmake-build
-        cd cmake-build
-        cmake ..
-        cmake --build . --config Release
-        echo "Poco_FOUNDATION_INCLUDE=${{ github.workspace }}/poco/Foundation/include" >> $GITHUB_ENV
-        echo "Poco_NET_INCLUDE=${{ github.workspace }}/poco/Net/include" >> $GITHUB_ENV
+        sudo apt-get -y update && sudo apt-get -y install automake libtool build-essential
+       
+    - name: Install libuv
+      run: |
+        wget https://github.com/libuv/libuv/archive/refs/tags/v1.49.2.tar.gz
+        tar -xvzf v1.49.2.tar.gz
+        cd libuv-1.49.2
+        sh autogen.sh
+        ./configure
+        make
+        make check
+        sudo make install
 
-    
     - name: Set reusable strings
       id: strings
       shell: bash
       run: |
         echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
-        echo "poco-dir=${{ github.workspace }}/poco/cmake-build/Poco" >> "$GITHUB_OUTPUT"
 
     - name: Configure CMake
-      run: >
-        cmake -B ${{ steps.strings.outputs.build-output-dir }}
-        -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
-        -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
-        -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
-        -DPoco_DIR=${{ steps.strings.outputs.poco-dir }}
-        -S ${{ github.workspace }}
+      run: |
+        cmake -B ${{ steps.strings.outputs.build-output-dir }} \
+          -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }} \
+          -DCMAKE_C_COMPILER=${{ matrix.c_compiler }} \
+          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+          -S ${{ github.workspace }}
 
     - name: Build
-      run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config ${{ matrix.build_type }}
+      run: |
+        cmake --build ${{ steps.strings.outputs.build-output-dir }} --config ${{ matrix.build_type }}
 
     - name: Test
       if: always()
@@ -70,3 +67,9 @@ jobs:
         else
           echo "Test directory not found. Skipping tests."
         fi
+
+    - name: Upload Executable
+      uses: actions/upload-artifact@v3
+      with:
+        name: kse-executable
+        path: ${{ steps.strings.outputs.build-output-dir }}/kse

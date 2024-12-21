@@ -29,12 +29,15 @@ endif()
 
 string(APPEND CMAKE_CXX_FLAGS " ${COMPILER_SPECIFIC_FLAGS}")
 
+include(Libuv)
+
 list(APPEND LIBS libutils)
 list(APPEND LIBS libexchange)
 
 include_directories(${PROJECT_SOURCE_DIR})
 include_directories(${PROJECT_SOURCE_DIR}/deps/fmt/include)
 include_directories(${PROJECT_SOURCE_DIR}/src)
+include_directories(${LIBUV_INCLUDE_DIRS})
 
 add_subdirectory(deps/fmt)
 add_subdirectory(utils)
