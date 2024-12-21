@@ -42,7 +42,7 @@ namespace kse::engine {
 		models::instrument_id_t instrument_id_ = models::INVALID_INSTRUMENT_ID;
 		message_handler* message_handler_ = nullptr;
 
-		models::client_order_map client_orders_{};
+		models::client_order_map client_orders_{ };
 
 		utils::memory_pool<models::price_level> price_level_pool_;
 		models::price_level *bid_ = nullptr;
@@ -62,7 +62,9 @@ namespace kse::engine {
 		auto match(models::client_id_t client_id, models::side_t side, models::order_id_t client_order_id, models::order_id_t market_order_id, models::quantity_t leaves_qty, models::order& order_to_match_with) noexcept -> models::quantity_t;
 		auto check_for_match(models::client_id_t client_id, models::order_id_t client_order_id, models::order_id_t new_market_order_id, models::side_t side, models::price_t price, models::quantity_t qty) noexcept -> models::quantity_t;
 
-		auto get_new_market_order_id() noexcept -> models::order_id_t { return next_market_order_id_++; }
+		auto get_new_market_order_id() noexcept -> models::order_id_t { 
+			return next_market_order_id_++; 
+		}
 		auto price_to_index(models::price_t price) const noexcept { return price % models::MAX_PRICE_LEVELS; }
 		auto get_orders_at_price_level(models::price_t price) const noexcept -> models::price_level* { return orders_at_price_levels_.at(price_to_index(price)); }
 		auto get_order_priority_at_price_level(models::price_t price) const noexcept -> models::priority_t {
@@ -107,7 +109,7 @@ namespace kse::engine {
 				auto add_after_flag = false;
 				auto current_price_level = best_price_level->next_entry_;
 
-				while (add_after_flag || comparison_func(new_price_level->price_, current_price_level->price_, new_price_level->side_)) {
+				while (!add_after_flag && !comparison_func(new_price_level->price_, current_price_level->price_, new_price_level->side_)) {
 					current_price_level = current_price_level->next_entry_;
 					if (current_price_level->next_entry_ == best_price_level)
 						add_after_flag = true;

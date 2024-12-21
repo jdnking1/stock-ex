@@ -69,7 +69,7 @@ namespace kse::models {
 		}
 	};
 
-	using order_map = std::array<order*, MAX_NUM_INSTRUMENTS>;
+	using order_map = std::vector<order*>;
 	using client_order_map = std::array<order_map, MAX_NUM_CLIENTS>;
 	using order_at_price_level_map = std::array<price_level*, MAX_PRICE_LEVELS>;
 }

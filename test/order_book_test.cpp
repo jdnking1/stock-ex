@@ -11,14 +11,23 @@ using namespace kse::models;
 using namespace kse::utils;
 
 
-TEST(OrderBookTest, AddBuyOrderNoMatch) {
-	auto loggerq = kse::utils::logger("order_book_test.log");
-
+class OrderBookTest : public ::testing::Test {
+protected:
+	kse::utils::logger loggerq{ "order_book_test.log" };
 	kse::models::client_response_queue client_responses{ kse::models::MAX_CLIENT_UPDATES };
 	kse::models::market_update_queue market_updates{ kse::models::MAX_MARKET_UPDATES };
-
 	kse::engine::message_handler message_handlers{ &client_responses, &market_updates, &loggerq };
-	auto order_book = std::make_unique<kse::engine::order_book>(1, &loggerq, &message_handlers);
+
+	std::unique_ptr<kse::engine::order_book> order_book;
+
+	void SetUp() override {
+		order_book = std::make_unique<kse::engine::order_book>(1, &loggerq, &message_handlers);
+	}
+};
+
+
+
+TEST_F(OrderBookTest, AddBuyOrderNoMatch) {
 	client_id_t client_id = 1;
 	order_id_t client_order_id = 1;
 	side_t side = side_t::BUY;
@@ -44,14 +53,7 @@ TEST(OrderBookTest, AddBuyOrderNoMatch) {
 	EXPECT_EQ(order_book->get_market_update().qty_ , quantity);
 }
 
-TEST(OrderBookTest, AddSellOrderNoMatch) {
-	auto loggerq = kse::utils::logger("order_book_test.log");
-
-	kse::models::client_response_queue client_responses{ kse::models::MAX_CLIENT_UPDATES };
-	kse::models::market_update_queue market_updates{ kse::models::MAX_MARKET_UPDATES };
-
-	kse::engine::message_handler message_handlers{ &client_responses, &market_updates, &loggerq };
-	auto order_book = std::make_unique<kse::engine::order_book>(1, &loggerq, &message_handlers);
+TEST_F(OrderBookTest, AddSellOrderNoMatch) {
 	client_id_t client_id = 1;
 	order_id_t client_order_id = 1;
 	side_t side = side_t::SELL;
@@ -77,14 +79,7 @@ TEST(OrderBookTest, AddSellOrderNoMatch) {
 	EXPECT_EQ(order_book->get_market_update().qty_, quantity);
 }
 
-TEST(OrderBookTest, AddBuyOrderWithMatch) {
-	auto loggerq = kse::utils::logger("order_book_test.log");
-
-	kse::models::client_response_queue client_responses{ kse::models::MAX_CLIENT_UPDATES };
-	kse::models::market_update_queue market_updates{ kse::models::MAX_MARKET_UPDATES };
-
-	kse::engine::message_handler message_handlers{ &client_responses, &market_updates, &loggerq };
-	auto order_book = std::make_unique<kse::engine::order_book>(1, &loggerq, &message_handlers);
+TEST_F(OrderBookTest, AddBuyOrderWithMatch) {
 	client_id_t client_id = 1;
 	order_id_t client_order_id = 1;
 	side_t side = side_t::BUY;
@@ -112,14 +107,7 @@ TEST(OrderBookTest, AddBuyOrderWithMatch) {
 	EXPECT_EQ(order_book->get_market_update().qty_, quantity);
 }
 
-TEST(OrderBookTest, AddSellOrderWithMatch) {
-	auto loggerq = kse::utils::logger("order_book_test.log");
-
-	kse::models::client_response_queue client_responses{ kse::models::MAX_CLIENT_UPDATES };
-	kse::models::market_update_queue market_updates{ kse::models::MAX_MARKET_UPDATES };
-
-	kse::engine::message_handler message_handlers{ &client_responses, &market_updates, &loggerq };
-	auto order_book = std::make_unique<kse::engine::order_book>(1, &loggerq, &message_handlers);
+TEST_F(OrderBookTest, AddSellOrderWithMatch) {
 	client_id_t client_id = 1;
 	order_id_t client_order_id = 1;
 	side_t side = side_t::SELL;
@@ -147,15 +135,7 @@ TEST(OrderBookTest, AddSellOrderWithMatch) {
 	EXPECT_EQ(order_book->get_market_update().qty_, quantity);
 }
 
-TEST(OrderBookTest, MultipleOrdersWithPartialAndFullMatches) {
-	auto loggerq = kse::utils::logger("order_book_test.log");
-
-	kse::models::client_response_queue client_responses{ kse::models::MAX_CLIENT_UPDATES };
-	kse::models::market_update_queue market_updates{ kse::models::MAX_MARKET_UPDATES };
-
-	kse::engine::message_handler message_handlers{ &client_responses, &market_updates, &loggerq };
-	auto order_book = std::make_unique<kse::engine::order_book>(1, &loggerq, &message_handlers);
-
+TEST_F(OrderBookTest, MultipleOrdersWithPartialAndFullMatches) {
 	client_id_t client_id_1 = 1;
 	order_id_t client_order_id_1 = 1;
 	side_t side_1 = side_t::BUY;
@@ -280,16 +260,7 @@ TEST(OrderBookTest, MultipleOrdersWithPartialAndFullMatches) {
 	market_updates.next_read_index();
 }
 
-TEST(OrderBookTest, ModifyOrderAndMatch) {
-	auto loggerq = kse::utils::logger("order_book_test.log");
-
-	kse::models::client_response_queue client_responses{ kse::models::MAX_CLIENT_UPDATES };
-	kse::models::market_update_queue market_updates{ kse::models::MAX_MARKET_UPDATES };
-
-	kse::engine::message_handler message_handlers{ &client_responses, &market_updates, &loggerq };
-	auto order_book = std::make_unique<kse::engine::order_book>(1, &loggerq, &message_handlers);
-
-	// Adding initial BUY order
+TEST_F(OrderBookTest, ModifyOrderAndMatch) {
 	client_id_t client_id_1 = 1;
 	order_id_t client_order_id_1 = 1;
 	side_t side_1 = side_t::BUY;
@@ -298,7 +269,6 @@ TEST(OrderBookTest, ModifyOrderAndMatch) {
 
 	order_book->add(client_id_1, client_order_id_1, side_1, price_1, qty_1);
 
-	// Adding initial SELL order
 	client_id_t client_id_2 = 2;
 	order_id_t client_order_id_2 = 2;
 	side_t side_2 = side_t::SELL;
@@ -307,11 +277,9 @@ TEST(OrderBookTest, ModifyOrderAndMatch) {
 
 	order_book->add(client_id_2, client_order_id_2, side_2, price_2, qty_2);
 
-	// Modify BUY order to match with SELL order
 	quantity_t new_qty_1 = 150;
 	order_book->modify(client_id_1, client_order_id_1, price_1, new_qty_1);
 
-	// Adding another SELL order to match with modified BUY order
 	client_id_t client_id_3 = 3;
 	order_id_t client_order_id_3 = 3;
 	side_t side_3 = side_t::SELL;
@@ -385,15 +353,7 @@ TEST(OrderBookTest, ModifyOrderAndMatch) {
 } 
 
 
-TEST(OrderBookTest, CancelNonExistentOrder) {
-	auto loggerq = kse::utils::logger("order_book_test.log");
-
-	kse::models::client_response_queue client_responses{ kse::models::MAX_CLIENT_UPDATES };
-	kse::models::market_update_queue market_updates{ kse::models::MAX_MARKET_UPDATES };
-
-	kse::engine::message_handler message_handlers{ &client_responses, &market_updates, &loggerq };
-	auto order_book = std::make_unique<kse::engine::order_book>(1, &loggerq, &message_handlers);
-
+TEST_F(OrderBookTest, CancelNonExistentOrder) {
 	client_id_t client_id = 1;
 	order_id_t client_order_id = 1;
 

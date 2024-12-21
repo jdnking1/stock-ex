@@ -66,9 +66,9 @@ jobs:
     - name: Test with Valgrind
       run: |
         valgrind --leak-check=full --track-origins=yes --verbose --error-exitcode=1 --log-file=valgrind_output.txt ${{ steps.strings.outputs.build-output-dir }}/test/test
-        valgrind --leak-check=full --track-origins=yes --verbose --error-exitcode=1 --log-file=valgrind_output_lfq.txt ${{ steps.strings.outputs.build-output-dir }}/src/utils/lock_free_queue_example
-        valgrind --leak-check=full --track-origins=yes --verbose --error-exitcode=1 --log-file=valgrind_output_mp.txt ${{ steps.strings.outputs.build-output-dir }}/src/utils/memory_pool_example
-        valgrind --leak-check=full --track-origins=yes --verbose --error-exitcode=1 --log-file=valgrind_output_lg.txt ${{ steps.strings.outputs.build-output-dir }}/src/utils/logger_example
+        valgrind --leak-check=full --track-origins=yes --verbose --error-exitcode=1 --log-file=valgrind_output_lfq.txt ${{ steps.strings.outputs.build-output-dir }}/utils/lock_free_queue_example
+        valgrind --leak-check=full --track-origins=yes --verbose --error-exitcode=1 --log-file=valgrind_output_mp.txt ${{ steps.strings.outputs.build-output-dir }}/utils/memory_pool_example
+        valgrind --leak-check=full --track-origins=yes --verbose --error-exitcode=1 --log-file=valgrind_output_lg.txt ${{ steps.strings.outputs.build-output-dir }}/utils/logger_example
       continue-on-error: true
 
     - name: Upload Valgrind outputs

@@ -1,8 +1,7 @@
 #include "order_book.hpp"
-#include "order_book.hpp"
-#include "order_book.hpp"
-#include "order_book.hpp"
-#include "order_book.hpp"
+
+#include "fmt/format.h"
+
 #include <algorithm>
 
 
@@ -10,16 +9,17 @@
 namespace kse::engine {
 	order_book::order_book(models::instrument_id_t instrument_id, utils::logger* logger, message_handler* message_handler)
 		: instrument_id_{ instrument_id }, message_handler_{ message_handler }, price_level_pool_{ models::MAX_PRICE_LEVELS }, order_pool_{ models::MAX_NUM_ORDERS },logger_{ logger } {
+		client_orders_.fill({ models::MAX_NUM_ORDERS, nullptr });
 	}
 
 	order_book::~order_book() {
 		logger_->log("%:% %() % OrderBook\n%\n", __FILE__, __LINE__, __func__, utils::get_curren_time_str(&time_str_),
-			to_string(false, true));
+			to_string(true, true));
 
 		message_handler_ = nullptr;
 		bid_ = ask_ = nullptr;
 
-		std::ranges::for_each(client_orders_, [](models::order_map& orders) { orders.fill(nullptr); });
+		std::ranges::for_each(client_orders_, [](models::order_map& orders) { orders.clear(); });
 	}
 
 	auto order_book::match(models::client_id_t client_id, models::side_t side, models::order_id_t client_order_id, models::order_id_t market_order_id, models::quantity_t leaves_qty, models::order& order_to_match_with) noexcept -> models::quantity_t
@@ -158,8 +158,76 @@ namespace kse::engine {
 		}
 	}
 
-	auto order_book::to_string(bool verbose, bool validity_check) const -> std::string
-	{
-		return verbose && validity_check ? "dverbose" : "verbose";
+	auto order_book::to_string(bool detailed, bool validity_check) const -> std::string {
+		std::stringstream ss;
+
+		auto print_price_level = [&](std::stringstream& ss, models::price_level* level, models::side_t side, models::price_t& last_price, bool check_validity) {
+			if (!level) return;
+
+			models::quantity_t total_qty = 0;
+			size_t num_orders = 0;
+
+			auto* order_itr = level->first_order_;
+			do {
+				total_qty += order_itr->qty_;
+				++num_orders;
+				order_itr = order_itr->next_order_;
+			} while (order_itr != level->first_order_);
+
+			ss << fmt::format(" <px:{:<5} prev:{:<5} next:{:<5}> {:<5} @ {:<6}({:<3})\n",
+				level->price_,
+				level->prev_entry_ ? level->prev_entry_->price_ : models::INVALID_PRICE,
+				level->next_entry_ ? level->next_entry_->price_ : models::INVALID_PRICE,
+				level->price_,
+				total_qty,
+				num_orders);
+
+			if (detailed) {
+				order_itr = level->first_order_;
+				do {
+					ss << fmt::format("[oid:{} q:{} p:{} n:{}] ",
+						order_itr->market_order_id_,
+						order_itr->qty_,
+						order_itr->prev_order_ ? order_itr->prev_order_->market_order_id_ : models::INVALID_ORDER_ID,
+						order_itr->next_order_ ? order_itr->next_order_->market_order_id_ : models::INVALID_ORDER_ID);
+					order_itr = order_itr->next_order_;
+				} while (order_itr != level->first_order_);
+				ss << '\n';
+			}
+
+			if (check_validity) {
+				if ((side == models::side_t::SELL && last_price >= level->price_) ||
+					(side == models::side_t::BUY && last_price <= level->price_)) {
+					ss << fmt::format("ERROR: Bids/Asks not sorted by price. Last: {} Current: {}\n", last_price, level->price_);
+				}
+				last_price = level->price_;
+			}
+			};
+
+		ss << fmt::format("OrderBook for Instrument ID: {}\n", instrument_id_);
+
+		ss << "ASKS:\n";
+		models::price_t last_ask_price = std::numeric_limits<models::price_t>::min();
+		auto* ask_itr = ask_;
+		if (ask_itr) {
+			do {
+				print_price_level(ss, ask_itr, models::side_t::SELL, last_ask_price, validity_check);
+				ask_itr = ask_itr->next_entry_;
+			} while (ask_itr && ask_itr != ask_);
+		}
+
+		ss << "\n                          X\n\n";
+
+		ss << "BIDS:\n";
+		models::price_t last_bid_price = std::numeric_limits<models::price_t>::max();
+		auto* bid_itr = bid_;
+		if (bid_itr) {
+			do {
+				print_price_level(ss, bid_itr, models::side_t::BUY, last_bid_price, validity_check);
+				bid_itr = bid_itr->next_entry_;
+			} while (bid_itr && bid_itr != bid_);
+		}
+
+		return ss.str();
 	}
 }
