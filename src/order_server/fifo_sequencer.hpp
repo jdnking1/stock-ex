@@ -8,6 +8,15 @@ namespace kse::server
 
 	class fifo_sequencer
 	{
+		struct timed_client_request {
+			utils::nananoseconds_t recv_time_ = 0;
+			models::client_request_internal request_;
+
+			auto operator<(const timed_client_request& rhs) {
+				return recv_time_ < rhs.recv_time_;
+			}
+		};
+
 	public:
 		fifo_sequencer(models::client_request_queue* incoming_messsages, utils::logger* logger): 
 			incoming_requests_{ incoming_messsages }, logger_{ logger } {};
@@ -51,16 +60,6 @@ namespace kse::server
 
 		std::string time_str_;
 		utils::logger* logger_ = nullptr;
-
-		struct timed_client_request {
-			utils::nananoseconds_t recv_time_ = 0;
-			models::client_request_internal request_;
-
-			auto operator<(const timed_client_request& rhs)  {
-				return recv_time_ < rhs.recv_time_;
-			}
-		};
-
 		std::array<timed_client_request, MAX_PENDING_REQUESTS> pending_client_requests_;
 		size_t pending_size_ = 0;
 	};
