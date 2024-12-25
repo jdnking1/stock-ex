@@ -25,7 +25,7 @@ namespace kse::engine {
 		message_handler& operator=(const message_handler&) = delete;
 		message_handler& operator=(message_handler&&) = delete;
 
-		auto send_client_response(const models::client_response& client_response) noexcept -> void {
+		auto send_client_response(const models::client_response_internal& client_response) noexcept -> void {
 			logger_->log("%:% %() % Sending %\n", __FILE__, __LINE__, __func__,
 				utils::get_curren_time_str(&time_str_), client_response.to_string());
 			auto* next_write = outgoing_responses_->get_next_write_element();

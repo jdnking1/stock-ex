@@ -18,6 +18,10 @@ kse::engine::matching_engine::~matching_engine()
 	using namespace std::literals::chrono_literals;
 	std::this_thread::sleep_for(1s);
 
+	for(auto& order_book : instrument_order_books_) {
+		order_book.reset();
+	}
+
 	incoming_requests_ = nullptr;
 	outgoing_responses_ = nullptr;
 	outgoing_market_updates_ = nullptr;

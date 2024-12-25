@@ -5,7 +5,9 @@ include_directories(${PROJECT_SOURCE_DIR}/src)
 
 add_library(libexchange STATIC ${SOURCES})
 
-target_link_libraries(libexchange PRIVATE fmt::fmt-header-only)
+target_link_libraries(libexchange PRIVATE fmt::fmt-header-only  ${LIBUV_LIBRARIES})
+target_include_directories(libexchange PRIVATE ${LIBUV_INCLUDE_DIRS})
 
 add_executable(order_book_example "engine/order_book_example.cpp")
 target_link_libraries(order_book_example PRIVATE libexchange)
+

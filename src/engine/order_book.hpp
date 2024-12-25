@@ -35,7 +35,7 @@ namespace kse::engine {
 		auto modify(models::client_id_t client_id, models::order_id_t client_order_id, models::price_t price, models::quantity_t quantity) noexcept -> void;
 		auto to_string(bool verbose = false, bool validity_check=true) const -> std::string;
 
-		auto get_client_response() const noexcept -> const models::client_response& { return client_response_; }
+		auto get_client_response() const noexcept -> const models::client_response_internal& { return client_response_; }
 		auto get_market_update() const noexcept -> const models::market_update& { return market_update_; }
 
 	private:
@@ -50,7 +50,7 @@ namespace kse::engine {
 		models::order_at_price_level_map orders_at_price_levels_{};
 
 		utils::memory_pool<models::order> order_pool_;
-		models::client_response client_response_;
+		models::client_response_internal client_response_;
 		models::market_update market_update_;
 
 		models::order_id_t next_market_order_id_ = 1;

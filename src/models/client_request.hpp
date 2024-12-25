@@ -3,6 +3,8 @@
 
 #include <sstream>
 
+#include <cstdint>
+
 #include "constants.hpp"
 #include "basic_types.hpp"
 
@@ -32,7 +34,7 @@ namespace kse::models {
 		return "UNKNOWN";
 	}
 
-	struct client_request {
+	struct client_request_internal {
 		client_request_type type_ = client_request_type::INVALID;
 
 		client_id_t client_id_ = INVALID_CLIENT_ID;
@@ -44,7 +46,7 @@ namespace kse::models {
 
 		auto to_string() const {
 			std::stringstream ss;
-			ss << "MEClientRequest"
+			ss << "client_request_internal"
 				<< " ["
 				<< "type:" << client_request_type_to_string(type_)
 				<< " client:" << client_id_to_string(client_id_)
@@ -58,7 +60,21 @@ namespace kse::models {
 		}
 	};
 
+	struct client_request_external {
+		uint64_t sequence_number_ = 0;
+		client_request_internal request_;
+
+		auto to_string() const {
+			std::stringstream ss;
+			ss << "client_request_external"
+				<< " ["
+				<< "sequence number:" << sequence_number_
+				<< "request:" << request_.to_string()
+				<< "]";
+			return ss.str();
+		}
+	};
 #pragma pack(pop)
 
-	using client_request_queue = kse::utils::lock_free_queue<client_request>;
+	using client_request_queue = kse::utils::lock_free_queue<client_request_internal>;
 }

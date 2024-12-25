@@ -33,7 +33,6 @@ namespace kse::utils {
 	}
 
 	#ifdef _WIN32
-
 	#include <windows.h>
 
 	inline auto pin_thread(size_t core) noexcept {
@@ -119,25 +118,51 @@ namespace kse::utils {
 		return *time_str;
 	}
 
-	struct socket_config {
-		std::string ip_address_;
-		std::string interface_;
-		int port_ = -1;
-		bool is_udp_ = false;
-		bool is_listening_ = false;
-		bool needs_timestamp_ = false;
+	inline bool is_big_endian() {
+		uint16_t num = 0x1;
+		return *(reinterpret_cast<uint8_t*>(&num)) == 0;
+	}
 
-		auto toString() const {
-			std::stringstream ss;
-			ss << "SocketCfg[ip:" << ip_address_
-				<< " iface:" << interface_
-				<< " port:" << port_
-				<< " is_udp:" << is_udp_
-				<< " is_listening:" << is_listening_
-				<< " needs_SO_timestamp:" << needs_timestamp_
-				<< "]";
+	inline uint16_t swap_bytes_16(uint16_t value) {
+		return (value >> 8) | (value << 8);
+	}
 
-			return ss.str();
-		}
-	};
+	inline uint32_t swap_bytes_32(uint32_t value) {
+		return ((value >> 24) & 0xFF) |
+			((value >> 8) & 0xFF00) |
+			((value << 8) & 0xFF0000) |
+			((value << 24) & 0xFF000000);
+	}
+
+	inline uint64_t swap_bytes_64(uint64_t value) {
+		return ((value >> 56) & 0xFF) |
+			((value >> 40) & 0xFF00) |
+			((value >> 24) & 0xFF0000) |
+			((value >> 8) & 0xFF000000) |
+			((value << 8) & 0xFF00000000) |
+			((value << 24) & 0xFF0000000000) |
+			((value << 40) & 0xFF000000000000) |
+			((value << 56) & 0xFF00000000000000);
+	}
+
+	inline uint16_t to_big_endian_16(uint16_t value) {
+		return is_big_endian() ? value : swap_bytes_16(value);
+	}
+	inline uint32_t to_big_endian_32(uint32_t value) {
+		return is_big_endian() ? value : swap_bytes_32(value);
+	}
+	inline uint64_t to_big_endian_64(uint64_t value) {
+		return is_big_endian() ? value : swap_bytes_64(value);
+	}
+
+
+	inline uint16_t from_big_endian_16(uint16_t value) {
+		return is_big_endian() ? value : swap_bytes_16(value);
+	}
+	inline uint32_t from_big_endian_32(uint32_t value) {
+		return is_big_endian() ? value : swap_bytes_32(value);
+	}
+	inline uint64_t from_big_endian_64(uint64_t value) {
+		return is_big_endian() ? value : swap_bytes_64(value);
+	}
 }

@@ -1,12 +1,12 @@
-#include <csignal>
-#include <iostream>
+#include "order_server/order_server.hpp"
 
 #include "engine/matching_engine.hpp"
+#include <csignal>
+#include <iostream>
 
 
 kse::utils::logger* logger = nullptr;
 kse::engine::matching_engine* matching_engine = nullptr;
- 
 
 void signal_handler(int) {
     using namespace std::literals::chrono_literals;
@@ -19,7 +19,6 @@ void signal_handler(int) {
 
     exit(EXIT_SUCCESS);
 }
-
 
 int main() {
     logger = new kse::utils::logger("kse.log");
@@ -37,6 +36,10 @@ int main() {
     logger->log("%:% %() % Starting Matching Engine...\n", __FILE__, __LINE__, __func__, kse::utils::get_curren_time_str(&time_str));
     matching_engine = new kse::engine::matching_engine(&client_requests, &client_responses, &market_updates);
     matching_engine->start();
+
+    logger->log("%:% %() % Starting Order Server...\n", __FILE__, __LINE__, __func__, kse::utils::get_curren_time_str(&time_str));
+    auto& server = kse::server::order_server::get_instance(&client_requests, &client_responses, "0.0.0.0", 54321);
+    server.start();
 
     using namespace std::literals::chrono_literals;
 
