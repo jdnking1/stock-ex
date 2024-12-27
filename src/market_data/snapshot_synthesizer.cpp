@@ -128,6 +128,7 @@ auto kse::market_data::snapshot_synthesizer::publish_snapshot() -> void
 	add_to_buffer(end_market_update);
 	send_data();
 
+	next_send_valid_index_ = 0;
 	logger_.log("%:% %() % Published snapshot of % orders.\n", __FILE__, __LINE__, __FUNCTION__, utils::get_curren_time_str(&time_str_), snapshot_size - 1);
 }
 

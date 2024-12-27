@@ -59,6 +59,7 @@ auto kse::market_data::market_data_publisher::process_and_publish() -> void
 	}
 
 	send_data();
+	next_send_valid_index_ = 0;
 }
 
 
