@@ -151,7 +151,7 @@ auto kse::server::on_idle(uv_idle_t* req [[maybe_unused]] ) -> void
 		}
 	};
 
-	process_responses(self.outgoing_messages_, self.client_next_outgoing_seq_num_);
+	process_responses(self.matching_engine_responses_, self.client_next_outgoing_seq_num_);
 	process_responses(&self.server_responses_, self.client_next_outgoing_seq_num_);
 }
 

@@ -90,7 +90,7 @@ namespace kse::server {
 		order_server& operator=(order_server&&) = delete;
 
 		auto start() -> void {
-			auto order_server_thread = utils::create_thread(-1, [this]() { run(); });
+			auto order_server_thread = utils::create_thread(0, [this]() { run(); });
 			order_server_thread.detach();
 		}
 
@@ -140,21 +140,20 @@ namespace kse::server {
 		models::client_id_t next_client_id_ = 0;
 		models::client_id_t last_client_id_connected_ = 0;
 
-		models::client_request_queue* incoming_messages_;
-		models::client_response_queue* outgoing_messages_;
+		models::client_response_queue* matching_engine_responses_;
 		models::client_response_queue server_responses_;
 
 		std::string time_str_;
 		utils::logger logger_;
 
-		std::array<size_t, models::MAX_NUM_CLIENTS> client_next_outgoing_seq_num_;
-		std::array<size_t, models::MAX_NUM_CLIENTS> client_next_incoming_seq_num_;
+		std::array<models::client_id_t, models::MAX_NUM_CLIENTS> client_next_outgoing_seq_num_;
+		std::array<models::client_id_t, models::MAX_NUM_CLIENTS> client_next_incoming_seq_num_;
 		std::array<std::unique_ptr<connection_t>, models::MAX_NUM_CLIENTS> client_connections_;
 
-		uv_loop_t* loop_;
-		uv_tcp_t* server_;
-		uv_idle_t* idle_;
-		uv_check_t* check_;
+		uv_loop_t* loop_ {nullptr};
+		uv_tcp_t* server_{ nullptr };
+		uv_idle_t* idle_ {nullptr};
+		uv_check_t* check_ {nullptr};
 
 		fifo_sequencer fifo_sequencer_;
 
@@ -164,7 +163,7 @@ namespace kse::server {
 			models::client_response_queue* outgoing_messages,
 			std::string_view ip,
 			int port)
-			:ip_{ ip }, port_{ port }, outgoing_messages_{ outgoing_messages }, server_responses_{ MAX_PENDING_REQUESTS }, 
+			:ip_{ ip }, port_{ port }, matching_engine_responses_{ outgoing_messages }, server_responses_{ MAX_PENDING_REQUESTS }, 
 			logger_("exchange_order_server.log"), fifo_sequencer_{ incoming_messages, &logger_ } {
 			client_next_incoming_seq_num_.fill(1);
 			client_next_outgoing_seq_num_.fill(1);

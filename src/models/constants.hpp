@@ -11,7 +11,7 @@ namespace kse::models {
 	constexpr size_t MAX_MARKET_UPDATES = 256 * 1024;
 
 	/// Maximum trading clients.
-	constexpr size_t MAX_NUM_CLIENTS = 128;
+	constexpr size_t MAX_NUM_CLIENTS = 10;
 
 	/// Maximum number of orders
 	constexpr size_t MAX_NUM_ORDERS = 2048;

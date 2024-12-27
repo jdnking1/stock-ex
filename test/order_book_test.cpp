@@ -25,8 +25,6 @@ protected:
 	}
 };
 
-
-
 TEST_F(OrderBookTest, AddBuyOrderNoMatch) {
 	client_id_t client_id = 1;
 	order_id_t client_order_id = 1;

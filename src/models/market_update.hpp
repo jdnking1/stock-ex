@@ -1,6 +1,7 @@
 #pragma once
 
 #include <sstream>
+#include <cstdint>
 
 #include "constants.hpp"
 #include "basic_types.hpp"
@@ -69,7 +70,7 @@ namespace kse::models {
 	};
 
 	struct client_market_update {
-		size_t sequence_number_ = 0;
+		uint64_t sequence_number_ = 0;
 		market_update update_;
 
 		auto to_string() const {
@@ -85,4 +86,5 @@ namespace kse::models {
 #pragma pack(pop)
 
 	using market_update_queue = kse::utils::lock_free_queue<market_update>;
+	using client_market_update_queue = kse::utils::lock_free_queue<client_market_update>;
 }
