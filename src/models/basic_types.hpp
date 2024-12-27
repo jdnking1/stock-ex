@@ -65,10 +65,10 @@ namespace kse::models {
 		return std::to_string(priority);
 	}
 
-	enum class side_t : int8_t {
+	enum class side_t : uint8_t {
 		INVALID = 0,
-		BUY,
-		SELL 
+		BUY = 1,
+		SELL = 2 
 	};
 
 	inline auto side_to_string(side_t side) -> std::string {

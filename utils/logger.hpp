@@ -15,7 +15,7 @@ namespace kse::utils {
 
 	using namespace std::literals::chrono_literals;
 
-	constexpr size_t LOG_QUEUE_SIZE = 8 * 1024 * 1024;
+	constexpr size_t LOG_QUEUE_SIZE = 1024;
 
 	enum class log_type : int8_t {
 		CHAR = 0,

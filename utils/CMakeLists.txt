@@ -15,12 +15,3 @@ add_executable(memory_pool_example "memory_pool_example.cpp")
 add_executable(lock_free_queue_example "lock_free_queue_example.cpp")
 
 add_executable(logger_example "logger_example.cpp")
-
-add_executable(libuv_example "libuv_example.cpp")
-
-target_include_directories(libuv_example PRIVATE ${LIBUV_INCLUDE_DIRS})
-target_link_libraries(libuv_example PRIVATE ${LIBUV_LIBRARIES})
-
-
-
-

@@ -37,9 +37,10 @@ namespace kse::utils {
 		}
 
 		auto next_read_index() noexcept {
-			DEBUG_ASSERT(num_elements_ != 0, "Read an invalid element");
-			next_read_index_ = (next_read_index_ + 1) % data_.size();
-			num_elements_--;
+			if (size() != 0) {
+				next_read_index_ = (next_read_index_ + 1) % data_.size();
+				num_elements_--;
+			}
 		}
 
 		auto size() const noexcept {

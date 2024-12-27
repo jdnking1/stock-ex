@@ -28,7 +28,7 @@ namespace kse::engine {
 		auto start() -> void;
 		auto stop() -> void;
 
-		auto process_client_request(const models::client_request& client_request) noexcept -> void {
+		auto process_client_request(const models::client_request_internal& client_request) noexcept -> void {
 			auto* order_book = instrument_order_books_.at(client_request.instrument_id_).get();
 
 
@@ -48,7 +48,7 @@ namespace kse::engine {
 			}
 		}
 
-		auto send_client_response(const models::client_response& client_response) noexcept -> void {
+		auto send_client_response(const models::client_response_internal& client_response) noexcept -> void {
 			message_handler_.send_client_response(client_response);
 		}
 
