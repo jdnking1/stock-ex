@@ -86,9 +86,9 @@ namespace kse::market_data
 
 		snapshot_synthesizer(models::client_market_update_queue* market_update_queue, std::string_view ip, int port) : 
 			ip_{ ip }, port_{ port }, market_update_queue_{ market_update_queue }, logger_{ "snapshot_synthesizer.log" }, 
-			loop_{(uv_loop_t*)std::malloc(sizeof(uv_loop_t))}, market_update_pool_{ models::MAX_NUM_ORDERS },
-			socket_{(uv_udp_t*)std::malloc(sizeof(uv_udp_t))}, idle_{(uv_idle_t*)std::malloc(sizeof(uv_idle_t))}, 
-			timer_{(uv_timer_t*)std::malloc(sizeof(uv_timer_t))}, sender_{(uv_udp_send_t*)std::malloc(sizeof(uv_udp_send_t))} {
+			loop_{(uv_loop_t*)std::malloc(sizeof(uv_loop_t))}, socket_{(uv_udp_t*)std::malloc(sizeof(uv_udp_t))}, 
+			idle_{(uv_idle_t*)std::malloc(sizeof(uv_idle_t))}, timer_{(uv_timer_t*)std::malloc(sizeof(uv_timer_t))}, 
+			sender_{(uv_udp_send_t*)std::malloc(sizeof(uv_udp_send_t))}, market_update_pool_{ models::MAX_NUM_ORDERS } {
 
 			updates_by_instrument_.resize(models::MAX_NUM_INSTRUMENTS);
 			buffer_.resize(BUFFER_SIZE);
