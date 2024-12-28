@@ -45,7 +45,7 @@ namespace kse::example::market_data {
 	};
 
 	auto alloc_buffer(uv_handle_t* handle, size_t suggested_size [[maybe_unused]], uv_buf_t* buf) -> void;
-    auto on_read(uv_udp_t* handle, ssize_t nread, const uv_buf_t* buf [[maybe_unused]], const sockaddr* addr [[maybe_unused]], unsigned flags [[maybe_unused]] ) -> void;
+	auto on_read(uv_udp_t* handle, ssize_t nread, const uv_buf_t* buf [[maybe_unused]], const sockaddr* addr [[maybe_unused]], unsigned flags [[maybe_unused]] ) -> void;
 
 	class feed_handler
 	{

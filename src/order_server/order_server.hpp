@@ -96,7 +96,6 @@ namespace kse::server {
 			logger_.log("%:% %() %\n", __FILE__, __LINE__, __func__, utils::get_curren_time_str(&time_str_));
 
 			loop_ = uv_default_loop();
-			server_ = (uv_tcp_t*)std::malloc(sizeof(uv_tcp_t));
 			uv_tcp_init(loop_, server_);
 
 			struct sockaddr_in addr;
@@ -105,15 +104,13 @@ namespace kse::server {
 
 			uv_listen((uv_stream_t*)server_, SOMAXCONN, on_new_connection);
 
-			idle_ = (uv_idle_t*)std::malloc(sizeof(uv_idle_t));
 			uv_idle_init(loop_, idle_);
 			uv_idle_start(idle_, on_idle);
 
-			check_ = (uv_check_t*)std::malloc(sizeof(uv_check_t));
 			uv_check_init(loop_, check_);
 			uv_check_start(check_, on_check);
 
-			std::cout << "Server listening on " << ip_ << ":" << port_ << "...\n";
+			std::cout << "Order Server listening on " << ip_ << ":" << port_ << "...\n";
 			uv_run(loop_, UV_RUN_DEFAULT);
 		}
 
@@ -162,7 +159,8 @@ namespace kse::server {
 			std::string_view ip,
 			int port)
 			:ip_{ ip }, port_{ port }, matching_engine_responses_{ outgoing_messages }, server_responses_{ MAX_PENDING_REQUESTS }, 
-			logger_("exchange_order_server.log"), fifo_sequencer_{ incoming_messages, &logger_ } {
+			logger_("exchange_order_server.log"), server_{ (uv_tcp_t*)std::malloc(sizeof(uv_tcp_t)) }, idle_{ (uv_idle_t*)std::malloc(sizeof(uv_idle_t)) }, 
+			check_{ (uv_check_t*)std::malloc(sizeof(uv_check_t)) }, fifo_sequencer_{ incoming_messages, &logger_ } {
 			client_next_incoming_seq_num_.fill(1);
 			client_next_outgoing_seq_num_.fill(1);
 		}

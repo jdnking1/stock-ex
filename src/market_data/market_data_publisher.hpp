@@ -54,7 +54,8 @@ namespace kse::market_data
 			                                         const std::string& snapshot_ip, int snapshot_port,
 			                                         const std::string& incremental_ip, int incremental_port)
 			: ip_{ incremental_ip }, port_{ incremental_port }, outgoing_market_update_queue_(market_updates), snapshot_market_update_queue_{ models::MAX_MARKET_UPDATES },
-			logger_{ "market_data_publisher.log" }{
+			logger_{ "market_data_publisher.log" }, loop_{(uv_loop_t*)std::malloc(sizeof(uv_loop_t))}, socket_{(uv_udp_t*)std::malloc(sizeof(uv_udp_t))}, 
+			idle_{(uv_idle_t*)std::malloc(sizeof(uv_idle_t))}, sender_{(uv_udp_send_t*)std::malloc(sizeof(uv_udp_send_t))} {
 			buffer_.resize(BUFFER_SIZE);
 			snapshot_synthesizer_ = &snapshot_synthesizer::get_instance(&snapshot_market_update_queue_, snapshot_ip, snapshot_port);
 		}
@@ -98,17 +99,9 @@ namespace kse::market_data
 		auto run() -> void {
 			logger_.log("%:% %() %\n", __FILE__, __LINE__, __func__, utils::get_curren_time_str(&time_str_));
 
-			loop_ = (uv_loop_t*)std::malloc(sizeof(uv_loop_t));
 			uv_loop_init(loop_);
-
-			socket_ = (uv_udp_t*)std::malloc(sizeof(uv_udp_t));
 			uv_udp_init(loop_, socket_);
-
 			uv_udp_set_membership(socket_, ip_.c_str(), NULL, UV_JOIN_GROUP);
-
-			sender_ = (uv_udp_send_t*)std::malloc(sizeof(uv_udp_send_t));
-
-			idle_ = (uv_idle_t*)std::malloc(sizeof(uv_idle_t));
 			uv_idle_init(loop_, idle_);
 			uv_idle_start(idle_, process_incremental_update);
 

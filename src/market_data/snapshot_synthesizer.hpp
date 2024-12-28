@@ -36,21 +36,15 @@ namespace kse::market_data
 		auto run() -> void {
 			logger_.log("%:% %() %\n", __FILE__, __LINE__, __func__, utils::get_curren_time_str(&time_str_));
 
-			loop_ = (uv_loop_t*)std::malloc(sizeof(uv_loop_t));
 			uv_loop_init(loop_);
 
-			socket_ = (uv_udp_t*)std::malloc(sizeof(uv_udp_t));
 			uv_udp_init(loop_, socket_);
 	
 			uv_udp_set_membership(socket_, ip_.c_str(), NULL, UV_JOIN_GROUP);
 
-			sender_ = (uv_udp_send_t*)std::malloc(sizeof(uv_udp_send_t));
-
-			idle_ = (uv_idle_t*)std::malloc(sizeof(uv_idle_t));
 			uv_idle_init(loop_, idle_);
 			uv_idle_start(idle_, process_update);
 
-			timer_ = (uv_timer_t*)std::malloc(sizeof(uv_timer_t));
 			uv_timer_init(loop_, timer_);
 			uv_timer_start(timer_, publish, 0, 60000);
 
@@ -90,12 +84,18 @@ namespace kse::market_data
 
 		utils::memory_pool<models::market_update> market_update_pool_;
 
-		snapshot_synthesizer(models::client_market_update_queue* market_update_queue, std::string_view ip, int port) : ip_{ ip }, port_{ port }, market_update_queue_{ market_update_queue }, logger_{ "snapshot_synthesizer.log" }, market_update_pool_{models::MAX_NUM_ORDERS} {
+		snapshot_synthesizer(models::client_market_update_queue* market_update_queue, std::string_view ip, int port) : 
+			ip_{ ip }, port_{ port }, market_update_queue_{ market_update_queue }, logger_{ "snapshot_synthesizer.log" }, 
+			loop_{(uv_loop_t*)std::malloc(sizeof(uv_loop_t))}, market_update_pool_{ models::MAX_NUM_ORDERS },
+			socket_{(uv_udp_t*)std::malloc(sizeof(uv_udp_t))}, idle_{(uv_idle_t*)std::malloc(sizeof(uv_idle_t))}, 
+			timer_{(uv_timer_t*)std::malloc(sizeof(uv_timer_t))}, sender_{(uv_udp_send_t*)std::malloc(sizeof(uv_udp_send_t))} {
+
 			updates_by_instrument_.resize(models::MAX_NUM_INSTRUMENTS);
 			buffer_.resize(BUFFER_SIZE);
 			for(auto& snapshot : updates_by_instrument_) {
 				snapshot.resize(models::MAX_NUM_ORDERS, nullptr);
 			}
+
 		};
 
 		~snapshot_synthesizer() {
