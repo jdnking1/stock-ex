@@ -5,7 +5,7 @@
 
 auto kse::market_data::market_data_publisher::add_to_buffer(const models::client_market_update& update) -> void
 {
-	serialize_client_market_update(update, buffer_.data());
+	serialize_client_market_update(update, buffer_.data() + next_send_valid_index_);
 	next_send_valid_index_ += sizeof(models::client_market_update);
 	utils::DEBUG_ASSERT(next_send_valid_index_ < BUFFER_SIZE, "buffer filled up");
 }

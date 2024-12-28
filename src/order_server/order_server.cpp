@@ -18,7 +18,7 @@ auto kse::server::order_server::handle_new_connection(uv_stream_t* server, int s
 		return;
 	}
 
-	auto conn = std::make_unique<connection_t>();
+	auto conn = std::make_unique<tcp_connection_t>();
 	uv_tcp_init(loop_, conn->handle_);
 
 	if (uv_accept(server, (uv_stream_t*)conn->handle_) == 0) {
@@ -43,7 +43,7 @@ auto kse::server::order_server::handle_new_connection(uv_stream_t* server, int s
 
 auto kse::server::alloc_buffer(uv_handle_t* handle, size_t suggested_size [[maybe_unused]], uv_buf_t* buf) -> void
 {
-	connection_t* conn = static_cast<connection_t*>(handle->data);
+	tcp_connection_t* conn = static_cast<tcp_connection_t*>(handle->data);
 	buf->base = conn->inbound_data_.data();
 	buf->len = static_cast<unsigned long>(conn->inbound_data_.size());
 }
@@ -51,7 +51,7 @@ auto kse::server::alloc_buffer(uv_handle_t* handle, size_t suggested_size [[mayb
 auto kse::server::on_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf [[maybe_unused]] ) -> void
 {
 	auto& self = order_server::get_instance();
-	connection_t* conn = static_cast<connection_t*>(stream->data);
+	tcp_connection_t* conn = static_cast<tcp_connection_t*>(stream->data);
 
 	if (nread < 0) [[unlikely]] {
 		if (nread == UV_EOF) {
@@ -75,7 +75,7 @@ auto kse::server::on_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* bu
 	}
 }
 
-auto kse::server::order_server::read_data(connection_t* conn, utils::nananoseconds_t user_time) -> void
+auto kse::server::order_server::read_data(tcp_connection_t* conn, utils::nananoseconds_t user_time) -> void
 {
 	logger_.log("%:% %() % Received socket:len:% rx:%\n", __FILE__, __LINE__, __func__, utils::get_curren_time_str(&time_str_),
 		conn->next_rcv_valid_index_, user_time);

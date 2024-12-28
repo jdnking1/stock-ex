@@ -18,9 +18,7 @@
 namespace kse::server {
 	constexpr size_t TCP_BUFFER_SIZE = 64 * 1024 * 1024;
 
-	class order_server;
-
-	struct connection_t {
+	struct tcp_connection_t {
 		uv_tcp_t* handle_ = nullptr;
 		uv_write_t* writer_ = nullptr;
 		std::vector<char> outbound_data_;
@@ -28,12 +26,12 @@ namespace kse::server {
 		std::vector<char> inbound_data_;
 		size_t next_rcv_valid_index_ = 0;
 
-		explicit connection_t() : handle_{(uv_tcp_t*)std::malloc(sizeof(uv_tcp_t))}, writer_{ (uv_write_t*)std::malloc(sizeof(uv_write_t))} {
+		explicit tcp_connection_t() : handle_{(uv_tcp_t*)std::malloc(sizeof(uv_tcp_t))}, writer_{ (uv_write_t*)std::malloc(sizeof(uv_write_t))} {
 			outbound_data_.resize(TCP_BUFFER_SIZE);
 			inbound_data_.resize(TCP_BUFFER_SIZE);
 		}
 
-		~connection_t() noexcept {
+		~tcp_connection_t() noexcept {
 			if (handle_) {
 				if (!uv_is_closing((uv_handle_t*)handle_)) {
 					uv_close((uv_handle_t*)handle_, nullptr);
@@ -133,7 +131,7 @@ namespace kse::server {
 
 		auto handle_new_connection(uv_stream_t* server, int status) -> void;
 
-		auto read_data(connection_t* conn, utils::nananoseconds_t user_time) -> void;
+		auto read_data(tcp_connection_t* conn, utils::nananoseconds_t user_time) -> void;
 
 		std::string ip_;
 		int port_;
@@ -148,7 +146,7 @@ namespace kse::server {
 
 		std::array<models::client_id_t, models::MAX_NUM_CLIENTS> client_next_outgoing_seq_num_;
 		std::array<models::client_id_t, models::MAX_NUM_CLIENTS> client_next_incoming_seq_num_;
-		std::array<std::unique_ptr<connection_t>, models::MAX_NUM_CLIENTS> client_connections_;
+		std::array<std::unique_ptr<tcp_connection_t>, models::MAX_NUM_CLIENTS> client_connections_;
 
 		uv_loop_t* loop_ {nullptr};
 		uv_tcp_t* server_{ nullptr };

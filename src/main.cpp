@@ -32,6 +32,18 @@ int main() {
 	kse::models::client_response_queue client_responses{ kse::models::MAX_CLIENT_UPDATES };
 	kse::models::market_update_queue market_updates{ kse::models::MAX_MARKET_UPDATES };
 
+	auto* next_write = market_updates.get_next_write_element();
+	*next_write = {kse::models::market_update_type::ADD, 1, 1, kse::models::side_t::BUY, 100, 100, 1};
+	market_updates.next_write_index();
+
+	auto* next_write2 = market_updates.get_next_write_element();
+	*next_write2 = { kse::models::market_update_type::ADD, 2, 1, kse::models::side_t::SELL, 101, 100, 1 };
+	market_updates.next_write_index();
+
+	auto* next_write3 = market_updates.get_next_write_element();
+	*next_write3 = { kse::models::market_update_type::ADD, 3, 1, kse::models::side_t::SELL, 101, 100, 2 };
+	market_updates.next_write_index();
+
 	std::string time_str;
 
 	logger->log("%:% %() % Starting Matching Engine...\n", __FILE__, __LINE__, __func__, kse::utils::get_curren_time_str(&time_str));

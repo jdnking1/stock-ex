@@ -4,7 +4,7 @@
 
 namespace kse::server
 {
-	constexpr size_t MAX_PENDING_REQUESTS = 10;
+	constexpr size_t MAX_PENDING_REQUESTS = 1024;
 
 	class fifo_sequencer
 	{
