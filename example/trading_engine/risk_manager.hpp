@@ -88,8 +88,6 @@ namespace kse::example::trading {
         }
 
     private:
-        std::string time_str_;
-        utils::logger* logger_ = nullptr;
         instrument_risk_info_map instruments_risk_;
     };
 }
