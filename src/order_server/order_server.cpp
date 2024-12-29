@@ -134,7 +134,7 @@ auto kse::server::on_idle(uv_idle_t* req [[maybe_unused]] ) -> void
 
 			if (can_write) [[likely]] {
 				uv_buf_t buf = uv_buf_init(conn->outbound_data_.data(), static_cast<unsigned int>(conn->next_send_valid_index_));
-				uv_write(conn->writer_, (uv_stream_t*)conn->handle_, &buf, 1, [](uv_write_t* req [[maybe_unused]], int status) {
+				uv_write(conn->writer_, (uv_stream_t*)conn->handle_, &buf, 1, [](uv_write_t* req, int status) {
 					auto& self = order_server::get_instance();
 					if (status < 0) {
 						self.logger_.log("%:% %() % error writing data: %\n", __FILE__, __LINE__, __func__,
@@ -144,7 +144,10 @@ auto kse::server::on_idle(uv_idle_t* req [[maybe_unused]] ) -> void
 
 					self.logger_.log("%:% %() % send data to socket\n", __FILE__, __LINE__, __func__,
 						utils::get_curren_time_str(&self.time_str_));
-					});
+					auto* conn = static_cast<tcp_connection_t*>(req->handle->data);
+					conn->next_send_valid_index_ = 0;
+				});
+				
 			}
 
 			response_queue->next_read_index();

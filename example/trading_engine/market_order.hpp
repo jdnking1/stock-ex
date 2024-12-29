@@ -7,7 +7,7 @@
 
 using namespace kse::models;
 
-namespace kse::example::trading_engine {
+namespace kse::example::trading {
 			struct market_order {
 				order_id_t market_order_id_ = INVALID_ORDER_ID;
 				side_t side_ = side_t::INVALID;

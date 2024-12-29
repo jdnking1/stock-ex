@@ -4,6 +4,15 @@
 #include "trading_engine/market_order.hpp"
 #include "trading_engine/market_order_book.hpp"
 
+#include "trading_utils/trading_utils.hpp"
+
+#include "trading_engine/feature_engine.hpp"
+
+#include "trading_engine/position_keeper.hpp"
+
+#include "trading_engine/risk_manager.hpp"
+
+#include "trading_engine/order_manager.hpp"
 #include <iostream>
 #include <chrono>
 

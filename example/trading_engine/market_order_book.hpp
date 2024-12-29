@@ -15,8 +15,8 @@
 #include "market_order.hpp"
 
 
-namespace kse::example::trading_engine {
-	class trading_engine;
+namespace kse::example::trading {
+	class trade_engine;
 
 	class market_order_book {
 	public:
@@ -32,8 +32,8 @@ namespace kse::example::trading_engine {
 
 		auto on_market_update(const models::market_update* market_update) noexcept -> void;
 
-		auto set_trade_engine(trading_engine* trading_engine) {
-			trading_engine_ = trading_engine;
+		auto set_trade_engine(trade_engine* te) {
+			trade_engine_ = te;
 		}
 
 		auto update_bbo(bool updateBid, bool updateAsk) noexcept  -> void  {
@@ -54,7 +54,7 @@ namespace kse::example::trading_engine {
 
 	private:
 		models::instrument_id_t instrument_id_ = models::INVALID_INSTRUMENT_ID;
-		trading_engine* trading_engine_ = nullptr;
+		trade_engine* trade_engine_ = nullptr;
 
 		market_order_map orders_{};
 

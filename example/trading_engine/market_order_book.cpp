@@ -2,23 +2,23 @@
 
 #include "fmt/format.h"
 
-kse::example::trading_engine::market_order_book::market_order_book(models::instrument_id_t instrument_id, utils::logger* logger):
+kse::example::trading::market_order_book::market_order_book(models::instrument_id_t instrument_id, utils::logger* logger):
 	instrument_id_{ instrument_id }, price_level_pool_{ models::MAX_PRICE_LEVELS }, order_pool_{ models::MAX_NUM_ORDERS }, logger_{ logger }
 {
 	orders_.resize(models::MAX_NUM_ORDERS);
 }
 
-kse::example::trading_engine::market_order_book::~market_order_book()
+kse::example::trading::market_order_book::~market_order_book()
 {
 	logger_->log("%:% %() % OrderBook\n%\n", __FILE__, __LINE__, __func__,
 		utils::get_curren_time_str(&time_str_), to_string(false, true));
 
-	trading_engine_ = nullptr;
+	trade_engine_ = nullptr;
 	bid_ = ask_ = nullptr;
 	orders_.clear();
 }
 
-auto kse::example::trading_engine::market_order_book::on_market_update(const models::market_update* market_update) noexcept -> void
+auto kse::example::trading::market_order_book::on_market_update(const models::market_update* market_update) noexcept -> void
 {
 	const auto bid_updated = (bid_ && market_update->side_ == side_t::BUY && market_update->price_ >= bid_->price_);
 	const auto ask_updated = (bid_ && market_update->side_ == side_t::SELL && market_update->price_ <= ask_->price_);
@@ -65,7 +65,7 @@ auto kse::example::trading_engine::market_order_book::on_market_update(const mod
 	//trading_engine_->on_order_book_update(market_update->instrument_id_, market_update->price_, market_update->side_, this);
 }
 
-auto kse::example::trading_engine::market_order_book::to_string(bool verbose, bool validity_check) const -> std::string
+auto kse::example::trading::market_order_book::to_string(bool verbose, bool validity_check) const -> std::string
 {
 	std::stringstream ss;
 
