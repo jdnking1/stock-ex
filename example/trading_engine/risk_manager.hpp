@@ -67,8 +67,7 @@ namespace kse::example::trading {
 
     class risk_manager {
     public:
-        risk_manager(utils::logger* logger, const position_keeper* pk, const trading_utils::trade_engine_config_map& instruments_cfg) :
-            logger_{ logger } {
+        risk_manager(const position_keeper* pk, const trading_utils::trade_engine_config_map& instruments_cfg) {
             for (models::instrument_id_t i = 0; i < models::MAX_NUM_INSTRUMENTS; ++i) {
                 instruments_risk_.at(i).position_info_ = pk->get_position_info(i);
                 instruments_risk_.at(i).risk_cfg_ = instruments_cfg.at(i).risk_cfg_;

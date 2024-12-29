@@ -15,8 +15,8 @@ namespace kse::example::trading {
 
     class order_manager {
     public:
-        order_manager(utils::logger* logger, trade_engine* engine, risk_manager* rm)
-            : trade_engine_{ engine }, risk_manager_{ rm }, logger_{ logger } {
+        order_manager(utils::logger* logger,/*, trade_engine* engine,*/ risk_manager* rm)
+            : /*trade_engine_{engine},*/ risk_manager_{rm}, logger_{logger} {
         }
 
         order_manager() = delete;
@@ -99,7 +99,7 @@ namespace kse::example::trading {
             return &(instrument_side_order_.at(instrument_id));
         }
     private:
-        trade_engine* trade_engine_ = nullptr;
+        //trade_engine* trade_engine_ = nullptr;
         const risk_manager* risk_manager_ = nullptr;
 
         std::string time_str_;
