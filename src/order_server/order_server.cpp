@@ -130,23 +130,24 @@ auto kse::server::on_idle(uv_idle_t* req [[maybe_unused]] ) -> void
 
 			auto* conn = self.client_connections_[client_response->client_id_].get();
 
-			conn->append_to_outbound_buffer(*client_response, next_outgoing_seq_num);
+			auto can_write = conn->append_to_outbound_buffer(*client_response, next_outgoing_seq_num);
 
-			uv_buf_t buf = uv_buf_init(conn->outbound_data_.data(), static_cast<unsigned int>(conn->next_send_valid_index_));
-			uv_write(conn->writer_, (uv_stream_t*)conn->handle_, &buf, 1, [](uv_write_t* req [[maybe_unused]], int status) {
-				auto& self = order_server::get_instance();
-				if (status < 0) {
-					self.logger_.log("%:% %() % error writing data: %\n", __FILE__, __LINE__, __func__,
-						utils::get_curren_time_str(&self.time_str_), uv_strerror(status));
-					return;
-				}
+			if (can_write) [[likely]] {
+				uv_buf_t buf = uv_buf_init(conn->outbound_data_.data(), static_cast<unsigned int>(conn->next_send_valid_index_));
+				uv_write(conn->writer_, (uv_stream_t*)conn->handle_, &buf, 1, [](uv_write_t* req [[maybe_unused]], int status) {
+					auto& self = order_server::get_instance();
+					if (status < 0) {
+						self.logger_.log("%:% %() % error writing data: %\n", __FILE__, __LINE__, __func__,
+							utils::get_curren_time_str(&self.time_str_), uv_strerror(status));
+						return;
+					}
 
-				self.logger_.log("%:% %() % send data to socket\n", __FILE__, __LINE__, __func__,
-					utils::get_curren_time_str(&self.time_str_));
-				});
+					self.logger_.log("%:% %() % send data to socket\n", __FILE__, __LINE__, __func__,
+						utils::get_curren_time_str(&self.time_str_));
+					});
+			}
 
 			response_queue->next_read_index();
-
 			++next_outgoing_seq_num;
 		}
 	};

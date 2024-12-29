@@ -46,12 +46,16 @@ namespace kse::server {
 			}
 		}
 
-		void append_to_outbound_buffer(models::client_response_internal& response, uint64_t sequence_number) {
-			serialize_client_response({sequence_number, std::move(response)}, outbound_data_.data() + next_send_valid_index_);
-			next_send_valid_index_ += sizeof(models::client_response_external);
+		auto append_to_outbound_buffer(models::client_response_internal& response, uint64_t sequence_number) -> bool {
+			if (outbound_data_.size() - next_send_valid_index_ >= sizeof(models::client_response_external)) [[likely]] {
+				serialize_client_response({ sequence_number, std::move(response) }, outbound_data_.data() + next_send_valid_index_);
+				next_send_valid_index_ += sizeof(models::client_response_external);
+				return true;
+			}
+			return false;
 		}
 
-		void shift_inbound_buffer(size_t processed_bytes) {
+		auto shift_inbound_buffer(size_t processed_bytes) -> void {
 			if (processed_bytes > 0 && processed_bytes <= next_rcv_valid_index_) {
 				std::memmove(inbound_data_.data(), inbound_data_.data() + processed_bytes, next_rcv_valid_index_ - processed_bytes);
 				next_rcv_valid_index_ -= processed_bytes;
@@ -133,7 +137,6 @@ namespace kse::server {
 		std::string ip_;
 		int port_;
 		models::client_id_t next_client_id_ = 0;
-		models::client_id_t last_client_id_connected_ = 0;
 
 		models::client_response_queue* matching_engine_responses_;
 		models::client_response_queue server_responses_;
