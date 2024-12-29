@@ -80,11 +80,11 @@ namespace kse::example::trading {
                         }
 
                     }
-                }
-                                       break;
+                }break;
+                case om_order_state::PENDING_MODIFIED:
                 case om_order_state::PENDING_NEW:
                 case om_order_state::PENDING_CANCEL:
-                    break;
+                break;
             }
         }
 

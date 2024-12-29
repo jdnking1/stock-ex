@@ -24,7 +24,6 @@ auto kse::example::trading::order_manager::cancel_order(om_order* order) noexcep
 
     //trade_engine_->sendClientRequest(&cancel_request);
 
-
-    logger_->log("%:% %() % canceled order %\n", __FILE__, __LINE__, __func__,
-        utils::get_curren_time_str(&time_str_), order->to_string().c_str());
+    logger_->log("%:% %() % canceled order % with reques %\n", __FILE__, __LINE__, __func__,
+        utils::get_curren_time_str(&time_str_), order->to_string().c_str(), cancel_request.to_string().c_str());
 }
