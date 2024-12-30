@@ -140,7 +140,7 @@ namespace kse::example::gateway {
 			std::string_view ip,
 			int port)
 			:ip_{ ip }, port_{ port }, incoming_responses_{ incoming_responses }, outgoing_requests_{ outgoing_requests }, 
-			logger_{ "exchange_order_server.log" + std::to_string((uintptr_t)this) }, connection_{ std::make_unique<tcp_connection_t>() }, idle_{ (uv_idle_t*)std::malloc(sizeof(uv_idle_t)) } {
+			logger_{ "order_gateway" + std::to_string((uintptr_t)outgoing_requests) + ".log" }, connection_{ std::make_unique<tcp_connection_t>() }, idle_{ (uv_idle_t*)std::malloc(sizeof(uv_idle_t)) } {
 		}
 
 		~order_gateway()

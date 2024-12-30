@@ -1,89 +1,35 @@
 #include "feed_handler/feed_handler.hpp"
 #include "order_gateway/order_gateway.hpp"
-
-#include "trading_engine/market_order.hpp"
-#include "trading_engine/market_order_book.hpp"
-
-#include "trading_utils/trading_utils.hpp"
-
-#include "trading_engine/feature_engine.hpp"
-
-#include "trading_engine/position_keeper.hpp"
-
-#include "trading_engine/risk_manager.hpp"
-
-#include "trading_engine/order_manager.hpp"
+#include "trading_engine/trade_engine.hpp"
 #include <iostream>
 #include <chrono>
+#include <cstdlib>
+#include <memory>
+#include <random>
 
-int main() {
-	kse::models::market_update_queue updates(10000);
-	const int sleep_time = 100 * 1000;
+int main(int, char** argv) {
+	const auto algo_type = kse::example::trading_utils::string_to_algo_type("RANDOM");
+
+	const int sleep_time = 20 * 1000;
+
 	std::string time_str{};
 
-	auto logger = new kse::utils::logger("trading.log" + std::to_string((uintptr_t)&updates));
+	auto logger = std::make_unique<kse::utils::logger>("trading" + std::to_string((uintptr_t)&sleep_time) + ".log");
 
 	kse::models::client_request_queue requests{ kse::models::MAX_CLIENT_UPDATES };
 	kse::models::client_response_queue responses{ kse::models::MAX_CLIENT_UPDATES };
+	kse::models::market_update_queue updates{ kse::models::MAX_MARKET_UPDATES };
 
+	trade_engine_config_map cfgs{};
 
-	/*	inline std::string client_request_type_to_string(client_request_type type) {
-		switch (type) {
-		case client_request_type::NEW:
-			return "NEW";
-		case client_request_type::CANCEL:
-			return "CANCEL";
-		case client_request_type::MODIFY:
-			return "MODIFY";
-		case client_request_type::INVALID:
-			return "INVALID";
-		}
-		return "UNKNOWN";
-	}
+	//kse::models::instrument_id_t next_instrument_id = 0;
 
-	struct client_request_internal {
-		client_request_type type_ = client_request_type::INVALID;
-
-		client_id_t client_id_ = INVALID_CLIENT_ID;
-		instrument_id_t instrument_id_ = INVALID_INSTRUMENT_ID;
-		order_id_t order_id_ = INVALID_ORDER_ID;
-		side_t side_ = side_t::INVALID;
-		price_t price_ = INVALID_PRICE;
-		quantity_t qty_ = INVALID_QUANTITY;
-
-		auto to_string() const {
-			std::stringstream ss;
-			ss << "client_request_internal"
-				<< " ["
-				<< "type:" << client_request_type_to_string(type_)
-				<< " client:" << client_id_to_string(client_id_)
-				<< " instrument:" << instrument_id_to_string(instrument_id_)
-				<< " oid:" << order_id_to_string(order_id_)
-				<< " side:" << side_to_string(side_)
-				<< " qty:" << quantity_to_string(qty_)
-				<< " price:" << price_to_string(price_)
-				<< "]";
-			return ss.str();
-		}
-	};*/
-
-	auto* next_write = requests.get_next_write_element();
-	*next_write = {kse::models::client_request_type::NEW, 1, 1, 1, kse::models::side_t::BUY, 15, 100};
-	requests.next_write_index();
-
-	auto* next_write2 = requests.get_next_write_element();
-	*next_write2 = { kse::models::client_request_type::NEW, 1, 2, 2, kse::models::side_t::BUY, 15, 100 };
-	requests.next_write_index();
-
-	auto* next_writex = requests.get_next_write_element();
-	*next_writex = { kse::models::client_request_type::NEW, 1, 2, 2, kse::models::side_t::SELL, 10, 110 };
-	requests.next_write_index();
-
-	auto* next_write3 = requests.get_next_write_element();
-	*next_write3 = { kse::models::client_request_type::MODIFY, 1, 1, 1, kse::models::side_t::BUY, 15, 20 };
-	requests.next_write_index();
-
-	//54321
+	/*for (int i = 2; i < argc; i += 5, ++next_instrument_id) {
+		cfgs.at(next_instrument_id) = { static_cast<kse::models::quantity_t>(std::atoi(argv[i])), std::atof(argv[i + 1]),
+										 {static_cast<kse::models::quantity_t>(std::atoi(argv[i + 2])),
+										  static_cast<kse::models::quantity_t>(std::atoi(argv[i + 3])),
+										  std::atof(argv[i + 4])} };
+	}*/
 
 	auto& feed_handler = kse::example::market_data::feed_handler::get_instance(&updates, "233.252.14.1", 54322, "233.252.14.3", 54323);
 	feed_handler.start();
@@ -91,16 +37,73 @@ int main() {
 	auto& order_gateway = kse::example::gateway::order_gateway::get_instance(&requests, &responses, "127.0.0.1", 54321);
 	order_gateway.start();
 
+	logger->log("%:% %() % Starting Trade Engine...\n", __FILE__, __LINE__, __func__, kse::utils::get_curren_time_str(&time_str));
+	auto trade_engine = std::make_unique<kse::example::trading::trade_engine>(algo_type, cfgs, &requests, &responses, &updates); 
+	trade_engine->start();
+
+	trade_engine->init_last_event_time();
+
+	if (algo_type == algo_type_t::RANDOM) {
+		kse::models::order_id_t order_id = std::atoi(argv[1]);
+		std::vector<kse::models::client_request_internal> client_requests_vec;
+		std::array<kse::models::price_t, kse::models::MAX_NUM_INSTRUMENTS> instrument_base_price;
+
+		std::random_device rd;
+		std::mt19937 gen(rd());  
+		std::uniform_int_distribution<> dis_price(100, 199);
+		std::uniform_int_distribution<> dis_qty(1, 100);
+		std::uniform_int_distribution<> dis_side(0, 1);
+		std::uniform_int_distribution<> dis_instrument(0, kse::models::MAX_NUM_INSTRUMENTS - 1);
+		std::uniform_int_distribution<> dis_offset(1, 10);
+
+		for (size_t i = 0; i < kse::models::MAX_NUM_INSTRUMENTS; ++i) {
+			instrument_base_price[i] = dis_price(gen);
+		}
+
+		for (size_t i = 0; i < 10000; ++i) {
+			const kse::models::instrument_id_t instrument_id = static_cast<kse::models::instrument_id_t>(dis_instrument(gen));
+			const kse::models::price_t price = instrument_base_price[instrument_id] + dis_offset(gen);
+			const kse::models::quantity_t qty = dis_qty(gen);
+			const kse::models::side_t side = (dis_side(gen) == 0) ? kse::models::side_t::BUY : kse::models::side_t::SELL;
+
+			std::cout << order_id << std::endl;
+			kse::models::client_request_internal new_request{
+				kse::models::client_request_type::NEW,
+				0, instrument_id, order_id++, side, price, qty
+			};
+
+			trade_engine->send_client_request(new_request);
+			std::this_thread::sleep_for(std::chrono::milliseconds(sleep_time));
+
+			client_requests_vec.push_back(new_request);
+
+			const auto cxl_index = dis_instrument(gen) % client_requests_vec.size();
+			auto cxl_request = client_requests_vec[cxl_index];
+			cxl_request.type_ = kse::models::client_request_type::CANCEL;
+			trade_engine->send_client_request(cxl_request);
+
+			if (trade_engine->silent_seconds() >= 60) {
+				logger->log("%:% %() % Stopping early because been silent for % seconds...\n", __FILE__, __LINE__, __func__,
+					kse::utils::get_curren_time_str(&time_str), trade_engine->silent_seconds());
+
+				break;
+			}
+		}
+	}
 	using namespace std::literals::chrono_literals;
 
-	while (true) {
-		logger->log("%:% %() % Sleeping for a few milliseconds..\n", __FILE__, __LINE__, __func__, kse::utils::get_curren_time_str(&time_str));
-		std::this_thread::sleep_for(sleep_time * 1000ms);
+	while (trade_engine->silent_seconds() < 60) {
+		logger->log("%:% %() % Waiting till no activity, been silent for % seconds...\n", __FILE__, __LINE__, __func__,
+			kse::utils::get_curren_time_str(&time_str), trade_engine->silent_seconds());
+
+		using namespace std::literals::chrono_literals;
+		std::this_thread::sleep_for(30s);
 	}
+
+	trade_engine->stop();
+	
+	using namespace std::literals::chrono_literals;
+	std::this_thread::sleep_for(10s);
 
 	return 0;
 }
-
-
-
-

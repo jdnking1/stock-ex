@@ -103,7 +103,7 @@ namespace kse::example::trading {
 				total_pnl_ = unrealized_pnl_ + realized_pnl_;
 
 				if (total_pnl_ != old_total_pnl)
-					logger->log("%:% %() % % %\n", __FILE__, __LINE__, __FUNCTION__, utils::get_curren_time_str(&time_str),
+					logger->log("%:% %() % % %\n", __FILE__, __LINE__, __func__, utils::get_curren_time_str(&time_str),
 						to_string().c_str(), bbo_->to_string().c_str());
 			}
 		}

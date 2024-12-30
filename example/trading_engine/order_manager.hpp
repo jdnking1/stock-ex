@@ -15,8 +15,8 @@ namespace kse::example::trading {
 
     class order_manager {
     public:
-        order_manager(utils::logger* logger,/*, trade_engine* engine,*/ risk_manager* rm)
-            : /*trade_engine_{engine},*/ risk_manager_{rm}, logger_{logger} {
+        order_manager(utils::logger* logger, trade_engine* engine, risk_manager* rm)
+            : trade_engine_{engine}, risk_manager_{rm}, logger_{logger} {
         }
 
         order_manager() = delete;
@@ -73,7 +73,7 @@ namespace kse::example::trading {
                             new_order(order, instrument_id, price, side, qty);
                         } 
                         else {
-                            logger_->log("%:% %() % Ticker:% Side:% Qty:% RiskCheckResult:%\n", __FILE__, __LINE__, __func__,
+                            logger_->log("%:% %() % Instrument:% Side:% Qty:% RiskCheckResult:%\n", __FILE__, __LINE__, __func__,
                                 utils::get_curren_time_str(&time_str_),
                                 models::instrument_id_to_string(instrument_id), models::side_to_string(side), models::quantity_to_string(qty),
                                 risk_check_result_to_string(risk_result));
@@ -99,7 +99,7 @@ namespace kse::example::trading {
             return &(instrument_side_order_.at(instrument_id));
         }
     private:
-        //trade_engine* trade_engine_ = nullptr;
+        trade_engine* trade_engine_ = nullptr;
         const risk_manager* risk_manager_ = nullptr;
 
         std::string time_str_;

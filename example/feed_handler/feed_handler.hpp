@@ -108,7 +108,7 @@ namespace kse::example::market_data {
 		queued_market_updates snapshot_queued_msgs_;
 		queued_market_updates incremental_queued_msgs_;
 
-		feed_handler(models::market_update_queue* incoming_updates, std::string_view snapshot_ip, int snapshot_port, std::string_view incremental_ip, int incremental_port) : incoming_updates_{ incoming_updates }, logger_{"feed_handler" + std::to_string((uintptr_t)this)}, snapshot_multicast_ip_{snapshot_ip}, snapshot_multicast_port_{snapshot_port}, incremental_multicast_ip_{incremental_ip}, incremental_multicast_port_{incremental_port} {
+		feed_handler(models::market_update_queue* incoming_updates, std::string_view snapshot_ip, int snapshot_port, std::string_view incremental_ip, int incremental_port) : incoming_updates_{ incoming_updates }, logger_{"feed_handler" + std::to_string((uintptr_t)incoming_updates) + ".log"}, snapshot_multicast_ip_{snapshot_ip}, snapshot_multicast_port_{snapshot_port}, incremental_multicast_ip_{incremental_ip}, incremental_multicast_port_{incremental_port} {
 			snapshot_feed_ = std::make_unique<multicast_connection_t>();
 			incremental_feed_ = std::make_unique<multicast_connection_t>();
 		}

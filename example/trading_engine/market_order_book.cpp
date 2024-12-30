@@ -1,11 +1,12 @@
 #include "market_order_book.hpp"
+#include "trade_engine.hpp"
 
 #include "fmt/format.h"
 
 kse::example::trading::market_order_book::market_order_book(models::instrument_id_t instrument_id, utils::logger* logger):
 	instrument_id_{ instrument_id }, price_level_pool_{ models::MAX_PRICE_LEVELS }, order_pool_{ models::MAX_NUM_ORDERS }, logger_{ logger }
 {
-	orders_.resize(models::MAX_NUM_ORDERS);
+	orders_.fill(nullptr);
 }
 
 kse::example::trading::market_order_book::~market_order_book()
@@ -15,13 +16,13 @@ kse::example::trading::market_order_book::~market_order_book()
 
 	trade_engine_ = nullptr;
 	bid_ = ask_ = nullptr;
-	orders_.clear();
+	orders_.fill(nullptr);
 }
 
 auto kse::example::trading::market_order_book::on_market_update(const models::market_update* market_update) noexcept -> void
 {
 	const auto bid_updated = (bid_ && market_update->side_ == side_t::BUY && market_update->price_ >= bid_->price_);
-	const auto ask_updated = (bid_ && market_update->side_ == side_t::SELL && market_update->price_ <= ask_->price_);
+	const auto ask_updated = (ask_ && market_update->side_ == side_t::SELL && market_update->price_ <= ask_->price_);
 
 	switch (market_update->type_) {
 		case models::market_update_type::ADD: {
@@ -39,7 +40,7 @@ auto kse::example::trading::market_order_book::on_market_update(const models::ma
 			remove_order(order);
 		}break;
 		case models::market_update_type::TRADE: {
-			//trading_engine_->on_trade_update(market_update, this);
+			trade_engine_->on_trade_update(market_update, this);
 			return;
 		}break;
 		case models::market_update_type::CLEAR: {
@@ -47,7 +48,7 @@ auto kse::example::trading::market_order_book::on_market_update(const models::ma
 				if (order)
 					order_pool_.free(order);
 			}
-			orders_.clear();
+			orders_.fill(nullptr);
 
 			clear_price_levels(side_t::BUY);
 			clear_price_levels(side_t::SELL);
@@ -59,10 +60,10 @@ auto kse::example::trading::market_order_book::on_market_update(const models::ma
 
 	update_bbo(bid_updated, ask_updated);
 
-	logger_->log("%:% %() % % %", __FILE__, __LINE__, __FUNCTION__,
+	logger_->log("%:% %() % % %", __FILE__, __LINE__, __func__,
 		utils::get_curren_time_str(&time_str_), market_update->to_string(), bbo_.to_string());
 
-	//trading_engine_->on_order_book_update(market_update->instrument_id_, market_update->price_, market_update->side_, this);
+	trade_engine_->on_order_book_update(market_update->instrument_id_, market_update->price_, market_update->side_, this);
 }
 
 auto kse::example::trading::market_order_book::to_string(bool verbose, bool validity_check) const -> std::string
@@ -115,7 +116,7 @@ auto kse::example::trading::market_order_book::to_string(bool verbose, bool vali
 			}
 		};
 
-	ss << fmt::format("Ticker:{}\n", models::instrument_id_to_string(instrument_id_));
+	ss << fmt::format("Instrument:{}\n", models::instrument_id_to_string(instrument_id_));
 
 	// Process asks
 	{

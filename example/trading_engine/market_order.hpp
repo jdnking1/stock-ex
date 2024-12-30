@@ -81,6 +81,6 @@ namespace kse::example::trading {
 				}
 			};
 
-			using market_order_map = std::vector<market_order*>;
+			using market_order_map = std::array<market_order*, MAX_NUM_ORDERS>;
 			using market_order_at_price_level_map = std::array<market_price_level*, MAX_PRICE_LEVELS>;
 }

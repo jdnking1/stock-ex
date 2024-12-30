@@ -90,8 +90,9 @@ namespace kse::example::trading {
 
 		auto clear_price_levels(models::side_t side) noexcept -> void {
 			auto* best_price_level = side == models::side_t::BUY ? bid_ : ask_;
+			if(!best_price_level) return;
 			auto* p = best_price_level->next_entry_;
-			while (p != best_price_level) {
+			while (p && p != best_price_level) {
 				auto* next = p->next_entry_;
 				price_level_pool_.free(p);
 				p = next;

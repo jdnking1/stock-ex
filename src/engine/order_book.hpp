@@ -53,7 +53,7 @@ namespace kse::engine {
 		models::client_response_internal client_response_;
 		models::market_update market_update_;
 
-		models::order_id_t next_market_order_id_ = 1;
+		inline static models::order_id_t next_market_order_id_ = 1;
 
 		std::string time_str_;
 		utils::logger* logger_ = nullptr;

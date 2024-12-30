@@ -57,7 +57,7 @@ auto kse::example::market_data::feed_handler::sync_snapshot_with_incremental() -
 	for (const auto& [seq, update] : snapshot_queued_msgs_) {
 		if (seq != next_snapshot_seq) {
 			have_complete_snapshot = false;
-			logger_.log("%:% %() % Detected gap in snapshot stream expected:% found:% %.\n", __FILE__, __LINE__, __FUNCTION__,
+			logger_.log("%:% %() % Detected gap in snapshot stream expected:% found:% %.\n", __FILE__, __LINE__, __func__,
 				utils::get_curren_time_str(&time_str_), next_snapshot_seq, seq, update.to_string());
 			break;
 		}
@@ -95,7 +95,7 @@ auto kse::example::market_data::feed_handler::sync_snapshot_with_incremental() -
 
 		if (seq != next_expected_seq_) {
 			have_complete_incremental = false;
-			logger_.log("%:% %() % Detected gap in incremental stream expected:% found:% %.\n", __FILE__, __LINE__, __FUNCTION__,
+			logger_.log("%:% %() % Detected gap in incremental stream expected:% found:% %.\n", __FILE__, __LINE__, __func__,
 				utils::get_curren_time_str(&time_str_), next_expected_seq_, seq, update.to_string());
 			break;
 		}

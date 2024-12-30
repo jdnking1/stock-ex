@@ -147,7 +147,6 @@ auto kse::server::on_idle(uv_idle_t* req [[maybe_unused]] ) -> void
 					auto* conn = static_cast<tcp_connection_t*>(req->handle->data);
 					conn->next_send_valid_index_ = 0;
 				});
-				
 			}
 
 			response_queue->next_read_index();
