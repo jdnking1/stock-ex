@@ -47,13 +47,13 @@ namespace kse::engine {
 		utils::memory_pool<models::price_level> price_level_pool_;
 		models::price_level *bid_ = nullptr;
 		models::price_level *ask_ = nullptr;
-		models::order_at_price_level_map orders_at_price_levels_{};
+		models::order_at_price_level_map price_levels_{};
 
 		utils::memory_pool<models::order> order_pool_;
 		models::client_response_internal client_response_;
 		models::market_update market_update_;
 
-		models::order_id_t next_market_order_id_ = 1;
+		inline static models::order_id_t next_market_order_id_ = 1;
 
 		std::string time_str_;
 		utils::logger* logger_ = nullptr;
@@ -66,14 +66,14 @@ namespace kse::engine {
 			return next_market_order_id_++; 
 		}
 		auto price_to_index(models::price_t price) const noexcept { return price % models::MAX_PRICE_LEVELS; }
-		auto get_orders_at_price_level(models::price_t price) const noexcept -> models::price_level* { return orders_at_price_levels_.at(price_to_index(price)); }
+		auto get_price_level(models::price_t price) const noexcept -> models::price_level* { return price_levels_.at(price_to_index(price)); }
 		auto get_order_priority_at_price_level(models::price_t price) const noexcept -> models::priority_t {
-			const auto* orders_at_price_level = get_orders_at_price_level(price);
+			const auto* orders_at_price_level = get_price_level(price);
 			return orders_at_price_level ? orders_at_price_level->first_order_->priority_ + 1 : 1;
 		}
 
 		auto add_price_level(models::price_level* new_price_level) noexcept -> void {
-			orders_at_price_levels_.at(price_to_index(new_price_level->price_)) = new_price_level;
+			price_levels_.at(price_to_index(new_price_level->price_)) = new_price_level;
 
 			auto*& best_price_level = new_price_level->side_ == models::side_t::BUY ? bid_ : ask_;
 
@@ -124,8 +124,8 @@ namespace kse::engine {
 			}
 		}
 
-		auto remove_order_at_price(models::side_t side, models::price_t price) noexcept -> void {
-			auto *orders_at_price_level = get_orders_at_price_level(price);
+		auto remove_price_level(models::side_t side, models::price_t price) noexcept -> void {
+			auto *orders_at_price_level = get_price_level(price);
 			auto*& best_price_level = side == models::side_t::BUY ? bid_ : ask_;
 
 			if (orders_at_price_level->next_entry_ == orders_at_price_level) {
@@ -141,12 +141,12 @@ namespace kse::engine {
 				orders_at_price_level->next_entry_ = orders_at_price_level->prev_entry_ = nullptr;
 			}
 
-			orders_at_price_levels_.at(price_to_index(price)) = nullptr;
+			price_levels_.at(price_to_index(price)) = nullptr;
 			price_level_pool_.free(orders_at_price_level);
 		}
 
 		auto add_order(models::order* order) noexcept -> void { 
-			const auto* orders_at_price_level = get_orders_at_price_level(order->price_);
+			const auto* orders_at_price_level = get_price_level(order->price_);
 
 			if (!orders_at_price_level) {
 				order->next_order_ = order->prev_order_ = order;
@@ -167,10 +167,10 @@ namespace kse::engine {
 		}
 
 		auto remove_order(models::order* order) noexcept -> void {
-			auto* orders_at_price_level = get_orders_at_price_level(order->price_);
+			auto* orders_at_price_level = get_price_level(order->price_);
 
 			if (order->prev_order_ == order) {
-				remove_order_at_price(order->side_, order->price_);
+				remove_price_level(order->side_, order->price_);
 			}
 			else {
 				const auto order_before = order->prev_order_;

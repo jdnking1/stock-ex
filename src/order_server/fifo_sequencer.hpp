@@ -4,7 +4,7 @@
 
 namespace kse::server
 {
-	constexpr size_t MAX_PENDING_REQUESTS = 10;
+	constexpr size_t MAX_PENDING_REQUESTS = 1024;
 
 	class fifo_sequencer
 	{
@@ -37,7 +37,7 @@ namespace kse::server
 			if (!pending_size_) [[unlikely]]
 				return;
 
-			logger_->log("%:% %() % Processing % requests.\n", __FILE__, __LINE__, __FUNCTION__, utils::get_curren_time_str(&time_str_), pending_size_);
+			logger_->log("%:% %() % Processing % requests.\n", __FILE__, __LINE__, __func__, utils::get_curren_time_str(&time_str_), pending_size_);
 
 			
 			std::sort(pending_client_requests_.begin(), pending_client_requests_.begin() + pending_size_);
@@ -45,7 +45,7 @@ namespace kse::server
 			for (size_t i = 0; i < pending_size_; ++i) {
 				const auto& client_request = pending_client_requests_.at(i);
 
-				logger_->log("%:% %() % Writing RX:% Req:% to FIFO.\n", __FILE__, __LINE__, __FUNCTION__, utils::get_curren_time_str(&time_str_),
+				logger_->log("%:% %() % Writing RX:% Req:% to FIFO.\n", __FILE__, __LINE__, __func__, utils::get_curren_time_str(&time_str_),
 					client_request.recv_time_, client_request.request_.to_string());
 
 				auto next_write = incoming_requests_->get_next_write_element();

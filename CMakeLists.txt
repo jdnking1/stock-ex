@@ -36,10 +36,12 @@ list(APPEND LIBS libexchange)
 
 include_directories(${PROJECT_SOURCE_DIR})
 include_directories(${PROJECT_SOURCE_DIR}/deps/fmt/include)
+include_directories(${PROJECT_SOURCE_DIR}/deps/json)
 include_directories(${PROJECT_SOURCE_DIR}/src)
 include_directories(${LIBUV_INCLUDE_DIRS})
 
 add_subdirectory(deps/fmt)
+add_subdirectory(example)
 add_subdirectory(utils)
 add_subdirectory(src)
 add_subdirectory(test)

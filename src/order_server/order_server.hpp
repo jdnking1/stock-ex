@@ -18,9 +18,7 @@
 namespace kse::server {
 	constexpr size_t TCP_BUFFER_SIZE = 64 * 1024 * 1024;
 
-	class order_server;
-
-	struct connection_t {
+	struct tcp_connection_t {
 		uv_tcp_t* handle_ = nullptr;
 		uv_write_t* writer_ = nullptr;
 		std::vector<char> outbound_data_;
@@ -28,12 +26,12 @@ namespace kse::server {
 		std::vector<char> inbound_data_;
 		size_t next_rcv_valid_index_ = 0;
 
-		explicit connection_t() : handle_{(uv_tcp_t*)std::malloc(sizeof(uv_tcp_t))}, writer_{ (uv_write_t*)std::malloc(sizeof(uv_write_t))} {
+		explicit tcp_connection_t() : handle_{(uv_tcp_t*)std::malloc(sizeof(uv_tcp_t))}, writer_{ (uv_write_t*)std::malloc(sizeof(uv_write_t))} {
 			outbound_data_.resize(TCP_BUFFER_SIZE);
 			inbound_data_.resize(TCP_BUFFER_SIZE);
 		}
 
-		~connection_t() noexcept {
+		~tcp_connection_t() noexcept {
 			if (handle_) {
 				if (!uv_is_closing((uv_handle_t*)handle_)) {
 					uv_close((uv_handle_t*)handle_, nullptr);
@@ -48,12 +46,16 @@ namespace kse::server {
 			}
 		}
 
-		void append_to_outbound_buffer(models::client_response_internal& response, uint64_t sequence_number) {
-			serialize_client_response({sequence_number, std::move(response)}, outbound_data_.data() + next_send_valid_index_);
-			next_send_valid_index_ += sizeof(models::client_response_external);
+		auto append_to_outbound_buffer(models::client_response_internal& response, uint64_t sequence_number) -> bool {
+			if (outbound_data_.size() - next_send_valid_index_ >= sizeof(models::client_response_external)) [[likely]] {
+				serialize_client_response({ sequence_number, std::move(response) }, outbound_data_.data() + next_send_valid_index_);
+				next_send_valid_index_ += sizeof(models::client_response_external);
+				return true;
+			}
+			return false;
 		}
 
-		void shift_inbound_buffer(size_t processed_bytes) {
+		auto shift_inbound_buffer(size_t processed_bytes) -> void {
 			if (processed_bytes > 0 && processed_bytes <= next_rcv_valid_index_) {
 				std::memmove(inbound_data_.data(), inbound_data_.data() + processed_bytes, next_rcv_valid_index_ - processed_bytes);
 				next_rcv_valid_index_ -= processed_bytes;
@@ -98,7 +100,6 @@ namespace kse::server {
 			logger_.log("%:% %() %\n", __FILE__, __LINE__, __func__, utils::get_curren_time_str(&time_str_));
 
 			loop_ = uv_default_loop();
-			server_ = (uv_tcp_t*)std::malloc(sizeof(uv_tcp_t));
 			uv_tcp_init(loop_, server_);
 
 			struct sockaddr_in addr;
@@ -107,15 +108,13 @@ namespace kse::server {
 
 			uv_listen((uv_stream_t*)server_, SOMAXCONN, on_new_connection);
 
-			idle_ = (uv_idle_t*)std::malloc(sizeof(uv_idle_t));
 			uv_idle_init(loop_, idle_);
 			uv_idle_start(idle_, on_idle);
 
-			check_ = (uv_check_t*)std::malloc(sizeof(uv_check_t));
 			uv_check_init(loop_, check_);
 			uv_check_start(check_, on_check);
 
-			std::cout << "Server listening on " << ip_ << ":" << port_ << "...\n";
+			std::cout << "Order Server listening on " << ip_ << ":" << port_ << "...\n";
 			uv_run(loop_, UV_RUN_DEFAULT);
 		}
 
@@ -133,12 +132,11 @@ namespace kse::server {
 
 		auto handle_new_connection(uv_stream_t* server, int status) -> void;
 
-		auto read_data(connection_t* conn, utils::nananoseconds_t user_time) -> void;
+		auto read_data(tcp_connection_t* conn, utils::nananoseconds_t user_time) -> void;
 
 		std::string ip_;
 		int port_;
 		models::client_id_t next_client_id_ = 0;
-		models::client_id_t last_client_id_connected_ = 0;
 
 		models::client_response_queue* matching_engine_responses_;
 		models::client_response_queue server_responses_;
@@ -148,7 +146,7 @@ namespace kse::server {
 
 		std::array<models::client_id_t, models::MAX_NUM_CLIENTS> client_next_outgoing_seq_num_;
 		std::array<models::client_id_t, models::MAX_NUM_CLIENTS> client_next_incoming_seq_num_;
-		std::array<std::unique_ptr<connection_t>, models::MAX_NUM_CLIENTS> client_connections_;
+		std::array<std::unique_ptr<tcp_connection_t>, models::MAX_NUM_CLIENTS> client_connections_;
 
 		uv_loop_t* loop_ {nullptr};
 		uv_tcp_t* server_{ nullptr };
@@ -164,7 +162,8 @@ namespace kse::server {
 			std::string_view ip,
 			int port)
 			:ip_{ ip }, port_{ port }, matching_engine_responses_{ outgoing_messages }, server_responses_{ MAX_PENDING_REQUESTS }, 
-			logger_("exchange_order_server.log"), fifo_sequencer_{ incoming_messages, &logger_ } {
+			logger_("exchange_order_server.log"), server_{ (uv_tcp_t*)std::malloc(sizeof(uv_tcp_t)) }, idle_{ (uv_idle_t*)std::malloc(sizeof(uv_idle_t)) }, 
+			check_{ (uv_check_t*)std::malloc(sizeof(uv_check_t)) }, fifo_sequencer_{ incoming_messages, &logger_ } {
 			client_next_incoming_seq_num_.fill(1);
 			client_next_outgoing_seq_num_.fill(1);
 		}

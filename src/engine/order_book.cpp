@@ -118,14 +118,15 @@ namespace kse::engine {
 
 		if(!is_cancelable) [[unlikely]] {
 			client_response_ = { models::client_response_type::CANCEL_REJECTED, client_id, instrument_id_, client_order_id, models::INVALID_ORDER_ID, models::side_t::INVALID, models::INVALID_PRICE, models::INVALID_QUANTITY, models::INVALID_QUANTITY};
+			message_handler_->send_client_response(client_response_);
 		}
 		else {
 			client_response_ = { models::client_response_type::CANCELED, client_id, instrument_id_, client_order_id, order->market_order_id_, order->side_, order->price_, models::INVALID_QUANTITY, order->qty_ };
 			market_update_ = { models::market_update_type::CANCEL, order->market_order_id_, instrument_id_, order->side_, order->price_, 0, order->priority_ };
 			remove_order(order);
+			message_handler_->send_client_response(client_response_);
+			message_handler_->send_market_update(market_update_);
 		}
-		message_handler_->send_client_response(client_response_);
-		message_handler_->send_market_update(market_update_);
 	}
 
 	auto order_book::modify(models::client_id_t client_id, models::order_id_t client_order_id, models::price_t new_price, models::quantity_t new_quantity) noexcept -> void

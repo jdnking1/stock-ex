@@ -5,7 +5,7 @@
 
 auto kse::market_data::snapshot_synthesizer::add_to_buffer(const models::client_market_update& update) -> void
 {
-	serialize_client_market_update(update, buffer_.data());
+	serialize_client_market_update(update, buffer_.data() + next_send_valid_index_);
 	next_send_valid_index_ += sizeof(models::client_market_update);
 	utils::DEBUG_ASSERT(next_send_valid_index_ < BUFFER_SIZE, "buffer filled up");
 }
@@ -96,7 +96,7 @@ auto kse::market_data::snapshot_synthesizer::send_data() -> void
 
 auto kse::market_data::snapshot_synthesizer::publish_snapshot() -> void
 {
-	size_t snapshot_size = 0;
+	uint64_t snapshot_size = 0;
 
 	const models::client_market_update start_market_update{ snapshot_size++, {models::market_update_type::SNAPSHOT_START, last_inc_seq_num_} };
 	add_to_buffer(start_market_update);
@@ -129,7 +129,7 @@ auto kse::market_data::snapshot_synthesizer::publish_snapshot() -> void
 	send_data();
 
 	next_send_valid_index_ = 0;
-	logger_.log("%:% %() % Published snapshot of % orders.\n", __FILE__, __LINE__, __FUNCTION__, utils::get_curren_time_str(&time_str_), snapshot_size - 1);
+	logger_.log("%:% %() % Published snapshot of % orders.\n", __FILE__, __LINE__, __func__, utils::get_curren_time_str(&time_str_), snapshot_size - 1);
 }
 
 auto kse::market_data::publish(uv_timer_t* handle [[maybe_unused]] ) -> void
