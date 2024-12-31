@@ -34,10 +34,14 @@ namespace kse::engine {
 
 			switch (client_request.type_) {
 				case models::client_request_type::NEW: {
+					START_MEASURE(Exchange_MEOrderBook_add);
 					order_book->add(client_request.client_id_, client_request.order_id_, client_request.side_, client_request.price_, client_request.qty_);
+					END_MEASURE(Exchange_MEOrderBook_add, logger_, time_str_);
 				} break;
 				case models::client_request_type::CANCEL: {
+					START_MEASURE(Exchange_MEOrderBook_cancel);
 					order_book->cancel(client_request.client_id_, client_request.order_id_);
+					END_MEASURE(Exchange_MEOrderBook_cancel, logger_, time_str_);
 				} break;
 				case models::client_request_type::MODIFY: {
 					order_book->modify(client_request.client_id_, client_request.order_id_, client_request.price_, client_request.qty_);
@@ -61,9 +65,12 @@ namespace kse::engine {
 			while (running_) {
 				const auto* client_request = incoming_requests_->get_next_read_element();
 				if (client_request) [[likely]] {
+					TIME_MEASURE(T3_MatchingEngine_LFQueue_read, logger_, time_str_);
 					logger_.log("%:% %() % Processing %\n", __FILE__, __LINE__, __func__, utils::get_curren_time_str(&time_str_),
 						client_request->to_string());
+					START_MEASURE(Exchange_MatchingEngine_processClientRequest);
 					process_client_request(*client_request);
+					END_MEASURE(Exchange_MatchingEngine_processClientRequest, logger_, time_str_);
 					incoming_requests_->next_read_index();
 				}
 			}

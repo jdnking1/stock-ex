@@ -1,6 +1,7 @@
 #include "feed_handler/feed_handler.hpp"
 #include "order_gateway/order_gateway.hpp"
 #include "trading_engine/trade_engine.hpp"
+#include <algorithm>
 #include <iostream>
 #include <chrono>
 #include <cstdlib>
@@ -10,7 +11,7 @@
 int main(int, char** argv) {
 	const auto algo_type = kse::example::trading_utils::string_to_algo_type("RANDOM");
 
-	const int sleep_time = 20 * 1000;
+	const int sleep_time = 1000;
 
 	std::string time_str{};
 
@@ -44,29 +45,37 @@ int main(int, char** argv) {
 	trade_engine->init_last_event_time();
 
 	if (algo_type == algo_type_t::RANDOM) {
-		kse::models::order_id_t order_id = std::atoi(argv[1]);
+		kse::models::order_id_t order_id = std::atoi(argv[2]);
 		std::vector<kse::models::client_request_internal> client_requests_vec;
+		std::vector<kse::models::client_request_internal> below_market_buy_orders; // To track below-market buy orders
 		std::array<kse::models::price_t, kse::models::MAX_NUM_INSTRUMENTS> instrument_base_price;
 
 		std::random_device rd;
-		std::mt19937 gen(rd());  
+		std::mt19937 gen(rd());
 		std::uniform_int_distribution<> dis_price(100, 199);
+		std::uniform_int_distribution<> dis_below_price(50, 90);
 		std::uniform_int_distribution<> dis_qty(1, 100);
-		std::uniform_int_distribution<> dis_side(0, 1);
+		std::uniform_int_distribution<> dis_side(0, 99);
 		std::uniform_int_distribution<> dis_instrument(0, kse::models::MAX_NUM_INSTRUMENTS - 1);
 		std::uniform_int_distribution<> dis_offset(1, 10);
+		std::uniform_int_distribution<> dis_probability(1, 100); // For 30% chance
 
+		// Initialize base prices for instruments
 		for (size_t i = 0; i < kse::models::MAX_NUM_INSTRUMENTS; ++i) {
 			instrument_base_price[i] = dis_price(gen);
 		}
 
-		for (size_t i = 0; i < 10000; ++i) {
+		// Main order generation loop
+		for (size_t i = 0; i < 100; ++i) {
 			const kse::models::instrument_id_t instrument_id = static_cast<kse::models::instrument_id_t>(dis_instrument(gen));
+			const kse::models::price_t trend_adjustment = (i % 2 == 0) ? 1 : -1;
+			instrument_base_price[instrument_id] += trend_adjustment;
 			const kse::models::price_t price = instrument_base_price[instrument_id] + dis_offset(gen);
 			const kse::models::quantity_t qty = dis_qty(gen);
-			const kse::models::side_t side = (dis_side(gen) == 0) ? kse::models::side_t::BUY : kse::models::side_t::SELL;
 
-			std::cout << order_id << std::endl;
+			const kse::models::side_t side = (dis_side(gen) < 50) ? kse::models::side_t::BUY : kse::models::side_t::SELL;
+
+			std::cout << "Regular Order: " << order_id << std::endl;
 			kse::models::client_request_internal new_request{
 				kse::models::client_request_type::NEW,
 				0, instrument_id, order_id++, side, price, qty
@@ -77,16 +86,34 @@ int main(int, char** argv) {
 
 			client_requests_vec.push_back(new_request);
 
-			const auto cxl_index = dis_instrument(gen) % client_requests_vec.size();
-			auto cxl_request = client_requests_vec[cxl_index];
-			cxl_request.type_ = kse::models::client_request_type::CANCEL;
-			trade_engine->send_client_request(cxl_request);
+			// 30% chance to create a below-market-price buy order
+			if (dis_probability(gen) <= 30) {
+				const kse::models::price_t below_market_price = dis_below_price(gen) - dis_offset(gen); // Below market price
+				const kse::models::quantity_t below_market_qty = dis_qty(gen);
 
-			if (trade_engine->silent_seconds() >= 60) {
-				logger->log("%:% %() % Stopping early because been silent for % seconds...\n", __FILE__, __LINE__, __func__,
-					kse::utils::get_curren_time_str(&time_str), trade_engine->silent_seconds());
+				std::cout << "Below Market Buy Order: " << order_id << std::endl;
+				kse::models::client_request_internal below_market_request{
+					kse::models::client_request_type::NEW,
+					0, instrument_id, order_id++, kse::models::side_t::BUY, below_market_price, below_market_qty
+				};
 
-				break;
+				trade_engine->send_client_request(below_market_request);
+				below_market_buy_orders.push_back(below_market_request);
+			}
+
+			// 30% chance to cancel an existing below-market-price buy order
+			if (!below_market_buy_orders.empty() && dis_probability(gen) <= 30) {
+				// Select the first below-market buy order for cancellation
+				auto cancel_order = below_market_buy_orders.back();
+				below_market_buy_orders.pop_back();
+
+				kse::models::client_request_internal cancel_request{
+					kse::models::client_request_type::CANCEL,
+					cancel_order.client_id_, cancel_order.instrument_id_, cancel_order.order_id_, cancel_order.side_, 0, 0
+				};
+
+				std::cout << "Cancelling Below Market Buy Order: " << cancel_order.order_id_ << std::endl;
+				trade_engine->send_client_request(cancel_request);
 			}
 		}
 	}

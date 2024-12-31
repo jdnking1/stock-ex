@@ -165,4 +165,34 @@ namespace kse::utils {
 	inline uint64_t from_big_endian_64(uint64_t value) {
 		return is_big_endian() ? value : swap_bytes_64(value);
 	}
+
+#if defined(_MSC_VER)
+#include <intrin.h>
+	inline uint64_t rdtsc() noexcept {
+		return __rdtsc();
+	}
+#else
+	inline uint64_t rdtsc() noexcept {
+		unsigned int lo, hi;
+		__asm__ __volatile__("rdtsc" : "=a"(lo), "=d"(hi));
+		return (static_cast<uint64_t>(hi) << 32) | lo;
+	}
+#endif
+
+
+#define START_MEASURE(TAG) const auto TAG = kse::utils::rdtsc()
+
+#define END_MEASURE(TAG, LOGGER, STR) \
+	do { \
+		const auto end =  kse::utils::rdtsc();                                                     \
+		LOGGER.log("% RDTSC "#TAG" %\n", kse::utils::get_curren_time_str(&STR), (end - TAG)); \
+	} while(false)
+
+
+#define TIME_MEASURE(TAG, LOGGER, STR)                                                              \
+	  do {                                                                                    \
+		const auto TAG = kse::utils::get_current_timestamp();                                           \
+		LOGGER.log("% TTT "#TAG" %\n",  kse::utils::get_curren_time_str(&STR), TAG);           \
+	  } while(false)
 }
+
