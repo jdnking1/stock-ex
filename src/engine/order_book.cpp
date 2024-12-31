@@ -43,8 +43,9 @@ namespace kse::engine {
 		{
 			market_update_ = { models::market_update_type::CANCEL, order_to_match_with.market_order_id_, instrument_id_, order_to_match_with.side_, order_to_match_with.price_, order_to_match_with_old_qty, order_to_match_with.priority_ };
 			message_handler_->send_market_update(market_update_);
-
+			START_MEASURE(Exchange_MEOrderBook_removeOrder);
 			remove_order(&order_to_match_with);
+			END_MEASURE(Exchange_MEOrderBook_removeOrder, (*logger_), time_str_);
 		}
 		else {
 			market_update_ = { models::market_update_type::MODIFY, order_to_match_with.market_order_id_, instrument_id_, order_to_match_with.side_, order_to_match_with.price_, order_to_match_with.qty_ , order_to_match_with.priority_ };
@@ -62,22 +63,26 @@ namespace kse::engine {
 			while (leaves_qty && ask_) {
 				auto* ask_order = ask_->first_order_;
 
-				if(ask_order->price_ >= price) [[likely]] {
+				if(ask_order->price_ > price) [[likely]] {
 					break;
 				}
 
+				START_MEASURE(Exchange_MEOrderBook_match);
 				leaves_qty = match(client_id, side, client_order_id, new_market_order_id, leaves_qty, *ask_order);
+				END_MEASURE(Exchange_MEOrderBook_match, (*logger_), time_str_);
 			}
 		}
 		else {
 			while (leaves_qty && bid_) {
 				auto* bid_order = bid_->first_order_;
 
-				if (bid_order->price_ <= price) [[likely]] {
+				if (bid_order->price_ < price) [[likely]] {
 					break;
 				}
 
+				START_MEASURE(Exchange_MEOrderBook_match);
 				leaves_qty = match(client_id, side, client_order_id, new_market_order_id, leaves_qty, *bid_order);
+				END_MEASURE(Exchange_MEOrderBook_match, (*logger_), time_str_);
 			}
 		}
 
@@ -92,14 +97,18 @@ namespace kse::engine {
 
 		message_handler_->send_client_response(client_response_);
 
+		START_MEASURE(Exchange_MEOrderBook_checkForMatch);
 		const auto leaves_qty = check_for_match(client_id, client_order_id, market_order_id, side, price, quantity);
+		END_MEASURE(Exchange_MEOrderBook_checkForMatch, (*logger_), time_str_);
 
 		if (leaves_qty > 0) [[likely]] {
-			const auto priority = get_order_priority_at_price_level(price);
+			const auto priority = get_order_priority_at_price_level(side, price);
 
 			auto order = order_pool_.alloc(instrument_id_, client_id, client_order_id, market_order_id, side, price, leaves_qty, priority, nullptr, nullptr);
 
+			START_MEASURE(Exchange_MEOrderBook_addOrder);
 			add_order(order);
+			END_MEASURE(Exchange_MEOrderBook_addOrder, (*logger_), time_str_);
 
 			market_update_ = { models::market_update_type::ADD, market_order_id, instrument_id_, side, price, leaves_qty, priority };
 			message_handler_->send_market_update(market_update_);
@@ -123,7 +132,9 @@ namespace kse::engine {
 		else {
 			client_response_ = { models::client_response_type::CANCELED, client_id, instrument_id_, client_order_id, order->market_order_id_, order->side_, order->price_, models::INVALID_QUANTITY, order->qty_ };
 			market_update_ = { models::market_update_type::CANCEL, order->market_order_id_, instrument_id_, order->side_, order->price_, 0, order->priority_ };
+			START_MEASURE(Exchange_MEOrderBook_removeOrder);
 			remove_order(order);
+			END_MEASURE(Exchange_MEOrderBook_removeOrder, (*logger_), time_str_);
 			message_handler_->send_client_response(client_response_);
 			message_handler_->send_market_update(market_update_);
 		}

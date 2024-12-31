@@ -51,10 +51,13 @@ namespace kse::server
 				auto next_write = incoming_requests_->get_next_write_element();
 				*next_write = client_request.request_;
 				incoming_requests_->next_write_index();
+				TIME_MEASURE(T2_OrderServer_LFQueue_write, (*logger_), time_str_);
 			}
 
 			pending_size_ = 0;
 		}
+
+		auto is_empty() -> bool { return !pending_size_; }
 	private:
 		models::client_request_queue* incoming_requests_ = nullptr;
 

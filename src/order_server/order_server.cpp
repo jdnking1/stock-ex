@@ -51,6 +51,7 @@ auto kse::server::alloc_buffer(uv_handle_t* handle, size_t suggested_size [[mayb
 auto kse::server::on_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf [[maybe_unused]] ) -> void
 {
 	auto& self = order_server::get_instance();
+	TIME_MEASURE(T1_OrderServer_TCP_read, self.logger_, self.time_str_);
 	tcp_connection_t* conn = static_cast<tcp_connection_t*>(stream->data);
 
 	if (nread < 0) [[unlikely]] {
@@ -83,8 +84,10 @@ auto kse::server::order_server::read_data(tcp_connection_t* conn, utils::nananos
 	if (conn->next_rcv_valid_index_ >= sizeof(models::client_request_external)) {
 		size_t i = 0;
 		for (; i + sizeof(models::client_request_external) <= conn->next_rcv_valid_index_; i += sizeof(models::client_request_external)) {
+			START_MEASURE(Exchange_odsDeserialization);
 			auto request = deserialize_client_request(conn->inbound_data_.data() + i);
-
+			END_MEASURE(Exchange_odsDeserialization, logger_, time_str_);
+			
 			logger_.log("%:% %() % Received %\n", __FILE__, __LINE__, __func__, utils::get_curren_time_str(&time_str_), request.to_string());
 
 			if (client_connections_[request.request_.client_id_].get() != conn) {
@@ -105,7 +108,9 @@ auto kse::server::order_server::read_data(tcp_connection_t* conn, utils::nananos
 
 			++next_incoming_seq_num;
 
+			START_MEASURE(Exchange_FIFOSequencer_addClientRequest);
 			fifo_sequencer_.add_request(user_time, request.request_);
+			END_MEASURE(Exchange_FIFOSequencer_addClientRequest, logger_, time_str_);
 		}
 		conn->shift_inbound_buffer(i);
 	}
@@ -119,7 +124,7 @@ auto kse::server::on_idle(uv_idle_t* req [[maybe_unused]] ) -> void
 		for (auto* client_response = response_queue->get_next_read_element();
 			response_queue->size() && client_response;
 			client_response = response_queue->get_next_read_element()) {
-
+			TIME_MEASURE(T5t_OrderServer_LFQueue_read, self.logger_, self.time_str_);
 			auto& next_outgoing_seq_num = next_seq_nums[client_response->client_id_];
 			self.logger_.log("%:% %() % Processing cid:% seq:% %\n", __FILE__, __LINE__, __func__,
 				utils::get_curren_time_str(&self.time_str_),
@@ -130,12 +135,16 @@ auto kse::server::on_idle(uv_idle_t* req [[maybe_unused]] ) -> void
 
 			auto* conn = self.client_connections_[client_response->client_id_].get();
 
+
+			START_MEASURE(Exchange_odsSerialization);
 			auto can_write = conn->append_to_outbound_buffer(*client_response, next_outgoing_seq_num);
+			END_MEASURE(Exchange_odsSerialization, self.logger_, self.time_str_);
 
 			if (can_write) [[likely]] {
 				uv_buf_t buf = uv_buf_init(conn->outbound_data_.data(), static_cast<unsigned int>(conn->next_send_valid_index_));
 				uv_write(conn->writer_, (uv_stream_t*)conn->handle_, &buf, 1, [](uv_write_t* req, int status) {
 					auto& self = order_server::get_instance();
+					TIME_MEASURE(T6t_OrderServer_TCP_write, self.logger_, self.time_str_);
 					if (status < 0) {
 						self.logger_.log("%:% %() % error writing data: %\n", __FILE__, __LINE__, __func__,
 							utils::get_curren_time_str(&self.time_str_), uv_strerror(status));
@@ -161,6 +170,11 @@ auto kse::server::on_idle(uv_idle_t* req [[maybe_unused]] ) -> void
 auto kse::server::on_check(uv_check_t* req [[maybe_unused]] ) -> void
 {
 	auto& self = order_server::get_instance();
+	if (self.fifo_sequencer_.is_empty())[[unlikely]] {
+		return;
+	}
+	START_MEASURE(Exchange_FIFOSequencer_sequenceAndPublish);
 	self.fifo_sequencer_.sequence_and_publish();
+	END_MEASURE(Exchange_FIFOSequencer_sequenceAndPublish, self.logger_, self.time_str_);
 }
 

@@ -31,6 +31,7 @@ namespace kse::engine {
 			auto* next_write = outgoing_responses_->get_next_write_element();
 			*next_write = client_response;
 			outgoing_responses_->next_write_index();
+			TIME_MEASURE(T4t_MatchingEngine_LFQueue_write, (*logger_), time_str_);
 		}
 
 		auto send_market_update(const models::market_update& market_update) noexcept -> void {
@@ -39,10 +40,10 @@ namespace kse::engine {
 			auto* next_write = outgoing_market_updates_->get_next_write_element();
 			*next_write = market_update;
 			outgoing_market_updates_->next_write_index();
+			TIME_MEASURE(T4_MatchingEngine_LFQueue_write, (*logger_), time_str_);
 		}
 
 	private:
-		//these pointers are owned by the matching engine
 		models::client_response_queue* outgoing_responses_ = nullptr;
 		models::market_update_queue* outgoing_market_updates_ = nullptr;
 		utils::logger* logger_ = nullptr;

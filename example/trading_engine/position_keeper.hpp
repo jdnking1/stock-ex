@@ -119,12 +119,12 @@ namespace kse::example::trading {
 		std::array<position_info_t, models::MAX_NUM_INSTRUMENTS> instrument_position_;
 
 	public:
-		auto add_fill(const models::client_response_internal* client_response) noexcept {
-			instrument_position_.at(client_response->instrument_id_).add_fill(client_response, logger_);
+		auto add_fill(const models::client_response_internal* client_response [[maybe_unused]] ) noexcept {
+		//   instrument_position_.at(client_response->instrument_id_).add_fill(client_response, logger_);
 		}
 
 		auto update_bbo(models::instrument_id_t instrument_id, const bbo_t* bbo) noexcept {
-			instrument_position_.at(instrument_id).update_bbo(bbo, logger_);
+		    instrument_position_.at(instrument_id).update_bbo(bbo, logger_);
 		}
 
 		auto get_position_info(models::instrument_id_t instrument_id) const noexcept {

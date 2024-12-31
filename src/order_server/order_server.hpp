@@ -162,7 +162,7 @@ namespace kse::server {
 			std::string_view ip,
 			int port)
 			:ip_{ ip }, port_{ port }, matching_engine_responses_{ outgoing_messages }, server_responses_{ MAX_PENDING_REQUESTS }, 
-			logger_("exchange_order_server.log"), server_{ (uv_tcp_t*)std::malloc(sizeof(uv_tcp_t)) }, idle_{ (uv_idle_t*)std::malloc(sizeof(uv_idle_t)) }, 
+			logger_("kse_order_server.log"), server_{ (uv_tcp_t*)std::malloc(sizeof(uv_tcp_t)) }, idle_{ (uv_idle_t*)std::malloc(sizeof(uv_idle_t)) }, 
 			check_{ (uv_check_t*)std::malloc(sizeof(uv_check_t)) }, fifo_sequencer_{ incoming_messages, &logger_ } {
 			client_next_incoming_seq_num_.fill(1);
 			client_next_outgoing_seq_num_.fill(1);
