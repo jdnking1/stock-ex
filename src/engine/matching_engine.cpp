@@ -1,6 +1,4 @@
 #include "matching_engine.hpp"
-
-#include <algorithm>
 #include <chrono>
 
 kse::engine::matching_engine::matching_engine(models::client_request_queue* client_requests, models::client_response_queue* client_responses, models::market_update_queue* market_updates):
@@ -30,7 +28,7 @@ kse::engine::matching_engine::~matching_engine()
 auto kse::engine::matching_engine::start() -> void
 {
 	running_ = true;
-	auto matching_engine_thread = utils::create_thread(2, [this]() { run(); });
+	auto matching_engine_thread = utils::create_thread(-1, [this]() { run(); });
 	matching_engine_thread.detach();
 }
 

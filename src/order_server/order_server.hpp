@@ -110,8 +110,8 @@ namespace kse::server {
 
 		auto start() -> void {
 			running_ = true;
-			auto order_server_thread = utils::create_thread(0, [this]() { run(); });
-			auto order_server_response_thread = utils::create_thread(4, [this]() { process_responses(); });
+			auto order_server_thread = utils::create_thread(-1, [this]() { run(); });
+			auto order_server_response_thread = utils::create_thread(-1, [this]() { process_responses(); });
 			order_server_thread.detach();
 			order_server_response_thread.detach();
 		}
