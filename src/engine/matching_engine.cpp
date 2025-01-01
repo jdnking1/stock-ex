@@ -30,7 +30,7 @@ kse::engine::matching_engine::~matching_engine()
 auto kse::engine::matching_engine::start() -> void
 {
 	running_ = true;
-	auto matching_engine_thread = utils::create_thread(-1, [this]() { run(); });
+	auto matching_engine_thread = utils::create_thread(2, [this]() { run(); });
 	matching_engine_thread.detach();
 }
 

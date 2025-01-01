@@ -3,7 +3,7 @@
 #include "market_data_encoder.hpp"
 
 
-auto kse::market_data::market_data_publisher::add_to_buffer(const models::client_market_update& update) -> void
+auto kse::market_data::market_data_publisher::add_to_buffer(const models::client_market_update & update) -> void
 {
 	serialize_client_market_update(update, buffer_.data() + next_send_valid_index_);
 	next_send_valid_index_ += sizeof(models::client_market_update);
@@ -43,10 +43,10 @@ auto kse::market_data::market_data_publisher::process_and_publish() -> void
 	for (auto* market_update = outgoing_market_update_queue_->get_next_read_element();
 		outgoing_market_update_queue_->size() && market_update; market_update = outgoing_market_update_queue_->get_next_read_element()) {
 		TIME_MEASURE(T5_MarketDataPublisher_LFQueue_read, logger_, time_str_);
-		logger_.log("%:% %() % Sending seq:% %\n", __FILE__, __LINE__, __func__, utils::get_curren_time_str(&time_str_), next_inc_seq_num_,
+		logger_.debug_log("%:% %() % Sending seq:% %\n", __FILE__, __LINE__, __func__, utils::get_curren_time_str(&time_str_), next_inc_seq_num_,
 			market_update->to_string().c_str());
 
-		models::client_market_update client_market_update{ next_inc_seq_num_, *market_update};
+		models::client_market_update client_market_update{ next_inc_seq_num_, *market_update };
 
 		START_MEASURE(Exchange_mdpubSerialization);
 		add_to_buffer(client_market_update);

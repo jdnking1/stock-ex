@@ -108,8 +108,9 @@ auto kse::example::gateway::order_gateway::send_request() -> void
 	}
 
 	if (connection_->next_send_valid_index_ != 0) {
+		auto* writer = static_cast<uv_write_t*>(std::malloc(sizeof(uv_write_t)));
 		uv_buf_t buf = uv_buf_init(connection_->outbound_data_.data(), static_cast<unsigned int>(connection_->next_send_valid_index_));
-		uv_write(connection_->writer_, (uv_stream_t*)connection_->handle_, &buf, 1, [](uv_write_t* req [[maybe_unused]], int status) {
+		uv_write(writer, (uv_stream_t*)connection_->handle_, &buf, 1, [](uv_write_t* req, int status) {
 			auto& self = order_gateway::get_instance();
 			if (status < 0) {
 				self.logger_.log("%:% %() % error writing data: %\n", __FILE__, __LINE__, __func__,
@@ -119,7 +120,9 @@ auto kse::example::gateway::order_gateway::send_request() -> void
 
 			self.logger_.log("%:% %() % send data to exchange\n", __FILE__, __LINE__, __func__,
 				utils::get_curren_time_str(&self.time_str_));
-			});
+
+			std::free(req);
+		});
 	}
 
 	connection_->next_send_valid_index_ = 0;

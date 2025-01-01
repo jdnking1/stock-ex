@@ -70,4 +70,67 @@ namespace kse::utils {
 		size_t free_block_index_ = 0;
 		size_t free_block_count_ = 0;
 	};
+
+
+	template<typename T>
+	class uv_memory_pool {
+	public:
+		explicit uv_memory_pool(size_t size) : memory_blocks_(size), free_block_count_(size) {
+			for (size_t i = 0; i < size - 1; ++i) {
+				memory_blocks_[i].next_free_block_ = i + 1;
+			}
+
+			memory_blocks_[size - 1].next_free_block_ = std::numeric_limits<size_t>::max();
+			ASSERT(reinterpret_cast<const memory_block*>(&(memory_blocks_[0].data_)) == &(memory_blocks_[0]), "T object should be first member of ObjectBlock.");
+		}
+
+		uv_memory_pool(const uv_memory_pool&) = delete;
+		uv_memory_pool(uv_memory_pool&&) = delete;
+		uv_memory_pool& operator=(const uv_memory_pool&) = delete;
+		uv_memory_pool& operator=(uv_memory_pool&&) = delete;
+
+		T* alloc() noexcept {
+			DEBUG_ASSERT(free_block_count_ > 0, "No free memory blocks.");
+			auto* memory_block = &memory_blocks_[free_block_index_];
+			DEBUG_ASSERT(memory_block->is_free_, "Memory block is not free.");
+			memory_block->is_free_ = false;
+
+			T* result = reinterpret_cast<T*>(&memory_blocks_[free_block_index_].data_);
+			free_block_index_ = memory_blocks_[free_block_index_].next_free_block_;
+			--free_block_count_;
+
+			return result;
+		}
+
+		void free(T* ptr) noexcept {
+			size_t block_index = reinterpret_cast<const memory_block*>(ptr) - &memory_blocks_[0];
+			DEBUG_ASSERT(block_index < memory_blocks_.size(), "Invalid memory block index.");
+			auto* memory_block = &memory_blocks_[block_index];
+			DEBUG_ASSERT(!memory_block->is_free_, "Memory block is already free.");
+
+			memory_block->is_free_ = true;
+			memory_block->next_free_block_ = free_block_index_;
+			free_block_index_ = block_index;
+			++free_block_count_;
+		}
+
+		size_t capacity() const {
+			return memory_blocks_.size();
+		}
+
+		size_t available() const {
+			return free_block_count_;
+		}
+
+	private:
+		struct memory_block {
+			alignas(T)char data_[sizeof(T)];
+			size_t next_free_block_ = 0;
+			bool is_free_ = true;
+		};
+
+		std::vector<memory_block> memory_blocks_;
+		size_t free_block_index_ = 0;
+		size_t free_block_count_ = 0;
+	};
 }

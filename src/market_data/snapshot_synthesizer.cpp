@@ -29,10 +29,10 @@ auto kse::market_data::snapshot_synthesizer::add_to_snapshot(models::client_mark
 			utils::DEBUG_ASSERT(stored_update != nullptr && stored_update->order_id_ == underlying_market_update.order_id_, "Expecting existing update to match new one.");
 			utils::DEBUG_ASSERT(stored_update != nullptr && stored_update->side_ == underlying_market_update.side_, "Expecting existing update to match new one.");
 
-			if (stored_update != nullptr) [[likely]] {
-				stored_update->qty_ = underlying_market_update.qty_;
-				stored_update->price_ = underlying_market_update.price_;
-			}
+
+			stored_update->qty_ = underlying_market_update.qty_;
+			stored_update->price_ = underlying_market_update.price_;
+
 		}break;
 		case models::market_update_type::CANCEL: {
 			auto* stored_update = instrument_updates.at(underlying_market_update.order_id_);

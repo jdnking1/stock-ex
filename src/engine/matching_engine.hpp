@@ -44,7 +44,9 @@ namespace kse::engine {
 					END_MEASURE(Exchange_MEOrderBook_cancel, logger_, time_str_);
 				} break;
 				case models::client_request_type::MODIFY: {
+					START_MEASURE(Exchange_MEOrderBook_modify);
 					order_book->modify(client_request.client_id_, client_request.order_id_, client_request.price_, client_request.qty_);
+					END_MEASURE(Exchange_MEOrderBook_modify, logger_, time_str_);
 				}break;
 				default: {
 					utils::FATAL("Received invalid client-request-type:" + models::client_request_type_to_string(client_request.type_));

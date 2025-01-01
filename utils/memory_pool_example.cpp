@@ -1,3 +1,4 @@
+#include "uv.h"
 #include "memory_pool.hpp"
 
 struct MyStruct {

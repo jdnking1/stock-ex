@@ -20,13 +20,12 @@ namespace kse::example::gateway {
 
 	struct tcp_connection_t {
 		uv_tcp_t* handle_ = nullptr;
-		uv_write_t* writer_ = nullptr;
 		std::vector<char> outbound_data_;
 		size_t next_send_valid_index_ = 0;
 		std::vector<char> inbound_data_;
 		size_t next_rcv_valid_index_ = 0;
 
-		explicit tcp_connection_t() : handle_{(uv_tcp_t*)std::malloc(sizeof(uv_tcp_t))}, writer_{ (uv_write_t*)std::malloc(sizeof(uv_write_t))} {
+		explicit tcp_connection_t() : handle_{(uv_tcp_t*)std::malloc(sizeof(uv_tcp_t))} {
 			outbound_data_.resize(TCP_BUFFER_SIZE);
 			inbound_data_.resize(TCP_BUFFER_SIZE);
 		}
@@ -38,11 +37,6 @@ namespace kse::example::gateway {
 				}
 				std::free(handle_);
 				handle_ = nullptr;
-			}
-
-			if (writer_) {
-				std::free(writer_);
-				writer_ = nullptr;
 			}
 		}
 
