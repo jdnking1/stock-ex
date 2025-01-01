@@ -52,11 +52,11 @@ namespace kse::market_data
 		snapshot_synthesizer* snapshot_synthesizer_{ nullptr };
 
 		market_data_publisher(models::market_update_queue* market_updates,
-			                                         const std::string& snapshot_ip, int snapshot_port,
-			                                         const std::string& incremental_ip, int incremental_port)
+			const std::string& snapshot_ip, int snapshot_port,
+			const std::string& incremental_ip, int incremental_port)
 			: ip_{ incremental_ip }, port_{ incremental_port }, outgoing_market_update_queue_(market_updates), snapshot_market_update_queue_{ models::MAX_MARKET_UPDATES },
-			logger_{ "kse_market_data_publisher.log" }, loop_{(uv_loop_t*)std::malloc(sizeof(uv_loop_t))}, socket_{(uv_udp_t*)std::malloc(sizeof(uv_udp_t))}, 
-			idle_{(uv_idle_t*)std::malloc(sizeof(uv_idle_t))}, sender_{(uv_udp_send_t*)std::malloc(sizeof(uv_udp_send_t))} {
+			logger_{ "kse_market_data_publisher.log" }, loop_{ (uv_loop_t*)std::malloc(sizeof(uv_loop_t)) }, socket_{ (uv_udp_t*)std::malloc(sizeof(uv_udp_t)) },
+			idle_{ (uv_idle_t*)std::malloc(sizeof(uv_idle_t)) }, sender_{ (uv_udp_send_t*)std::malloc(sizeof(uv_udp_send_t)) } {
 			buffer_.resize(BUFFER_SIZE);
 			snapshot_synthesizer_ = &snapshot_synthesizer::get_instance(&snapshot_market_update_queue_, snapshot_ip, snapshot_port);
 		}

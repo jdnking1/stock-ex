@@ -20,16 +20,19 @@ auto kse::server::order_server::handle_new_connection(uv_stream_t* server, int s
 
 	auto conn = std::make_unique<tcp_connection_t>();
 	uv_tcp_init(loop_, conn->handle_);
+	uv_tcp_nodelay(conn->handle_, 1);
+
+	uv_async_init(loop_, conn->async_write_msg_, write_message);
+
+	conn->async_write_msg_->data = conn.get();
+
 
 	if (uv_accept(server, (uv_stream_t*)conn->handle_) == 0) {
 		logger_.log("%:% %() % have_new_connection for clientID: %\n", __FILE__, __LINE__, __func__, utils::get_curren_time_str(&time_str_), next_client_id_);
 
 		conn->handle_->data = conn.get();
 
-		auto* response = server_responses_.get_next_write_element();
-		*response = models::client_response_internal{ models::client_response_type::ACCEPTED, next_client_id_, models::INVALID_INSTRUMENT_ID, models::INVALID_ORDER_ID,
-			models::INVALID_ORDER_ID, models::side_t::INVALID, models::INVALID_PRICE, models::INVALID_QUANTITY, models::INVALID_QUANTITY };
-		server_responses_.next_write_index();
+		send_connection_accepted_response(next_client_id_);
 
 		uv_read_start((uv_stream_t*)conn->handle_, alloc_buffer, on_read);
 
@@ -69,7 +72,7 @@ auto kse::server::on_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* bu
 
 		const utils::nananoseconds_t user_time = uv_now(self.loop_) * utils::NANOS_PER_MILLIS;
 
-		self.logger_.log("%:% %() % read socket: len:% utime:% \n", __FILE__, __LINE__, __func__,
+		self.logger_.debug_log("%:% %() % read socket: len:% utime:% \n", __FILE__, __LINE__, __func__,
 			utils::get_curren_time_str(&self.time_str_), conn->next_rcv_valid_index_, user_time);
 
 		self.read_data(conn, user_time);
@@ -88,10 +91,10 @@ auto kse::server::order_server::read_data(tcp_connection_t* conn, utils::nananos
 			auto request = deserialize_client_request(conn->inbound_data_.data() + i);
 			END_MEASURE(Exchange_odsDeserialization, logger_, time_str_);
 			
-			logger_.log("%:% %() % Received %\n", __FILE__, __LINE__, __func__, utils::get_curren_time_str(&time_str_), request.to_string());
+			logger_.debug_log("%:% %() % Received %\n", __FILE__, __LINE__, __func__, utils::get_curren_time_str(&time_str_), request.to_string());
 
-			if (client_connections_[request.request_.client_id_].get() != conn) {
-				logger_.log("%:% %() % Invalid socket for this ClientRequest from ClientId:% \n", __FILE__, __LINE__, __func__,
+			if (client_connections_[request.request_.client_id_].get() != conn) [[unlikely]] {
+				logger_.debug_log("%:% %() % Invalid socket for this ClientRequest from ClientId:% \n", __FILE__, __LINE__, __func__,
 					utils::get_curren_time_str(&time_str_), request.request_.client_id_);
 				send_invalid_response(request.request_.client_id_);
 				continue;
@@ -99,8 +102,8 @@ auto kse::server::order_server::read_data(tcp_connection_t* conn, utils::nananos
 
 			auto& next_incoming_seq_num = client_next_incoming_seq_num_[request.request_.client_id_];
 
-			if (request.sequence_number_ != next_incoming_seq_num) { 
-				logger_.log("%:% %() % Incorrect sequence number. ClientId:% SeqNum expected:% received:%\n", __FILE__, __LINE__, __func__,
+			if (request.sequence_number_ != next_incoming_seq_num) [[unlikely]] {
+				logger_.debug_log("%:% %() % Incorrect sequence number. ClientId:% SeqNum expected:% received:%\n", __FILE__, __LINE__, __func__,
 					utils::get_curren_time_str(&time_str_), request.request_.client_id_, next_incoming_seq_num, request.sequence_number_);
 				send_invalid_response(request.request_.client_id_);
 				continue;
@@ -116,65 +119,52 @@ auto kse::server::order_server::read_data(tcp_connection_t* conn, utils::nananos
 	}
 }
 
-auto kse::server::on_idle(uv_idle_t* req [[maybe_unused]] ) -> void
+auto kse::server::order_server::write_to_socket(tcp_connection_t* conn) -> void
+{
+	for (auto* data_index = conn->write_queue_.get_next_read_element();
+		conn->write_queue_.size() && data_index;
+		data_index = conn->write_queue_.get_next_read_element()) {
+		uv_buf_t buf = uv_buf_init(conn->get_response_buffer(*data_index), static_cast<unsigned int>(sizeof(models::client_response_external)));
+		auto* writer = writer_pool_.alloc();
+
+		uv_write(writer, (uv_stream_t*)conn->handle_, &buf, 1, [](uv_write_t* req, int status) {
+			auto& self = order_server::get_instance();
+			TIME_MEASURE(T6t_OrderServer_TCP_write, self.logger_, self.time_str_);
+			if (status < 0) {
+				self.logger_.log("%:% %() % error writing data: %\n", __FILE__, __LINE__, __func__,
+					utils::get_curren_time_str(&self.time_str_), uv_strerror(status));
+				return;
+			}
+			self.writer_pool_.free(req);
+			self.logger_.log("%:% %() % send data to socket\n", __FILE__, __LINE__, __func__,
+				utils::get_curren_time_str(&self.time_str_));
+		});
+
+		conn->write_queue_.next_read_index();
+	}
+}
+
+auto kse::server::write_message(uv_async_t* async) -> void
 {
 	auto& self = order_server::get_instance();
+	self.write_to_socket(static_cast<tcp_connection_t*>(async->data));
+}
 
-	auto process_responses = [&](auto* response_queue, auto& next_seq_nums) {
-		for (auto* client_response = response_queue->get_next_read_element();
-			response_queue->size() && client_response;
-			client_response = response_queue->get_next_read_element()) {
-			TIME_MEASURE(T5t_OrderServer_LFQueue_read, self.logger_, self.time_str_);
-			auto& next_outgoing_seq_num = next_seq_nums[client_response->client_id_];
-			self.logger_.log("%:% %() % Processing cid:% seq:% %\n", __FILE__, __LINE__, __func__,
-				utils::get_curren_time_str(&self.time_str_),
-				client_response->client_id_, next_outgoing_seq_num, client_response->to_string());
-
-			utils::DEBUG_ASSERT(self.client_connections_[client_response->client_id_] != nullptr,
-				"Don't have a TCPSocket for ClientId:" + std::to_string(client_response->client_id_));
-
-			auto* conn = self.client_connections_[client_response->client_id_].get();
-
-
-			START_MEASURE(Exchange_odsSerialization);
-			auto can_write = conn->append_to_outbound_buffer(*client_response, next_outgoing_seq_num);
-			END_MEASURE(Exchange_odsSerialization, self.logger_, self.time_str_);
-
-			if (can_write) [[likely]] {
-				uv_buf_t buf = uv_buf_init(conn->outbound_data_.data(), static_cast<unsigned int>(conn->next_send_valid_index_));
-				uv_write(conn->writer_, (uv_stream_t*)conn->handle_, &buf, 1, [](uv_write_t* req, int status) {
-					auto& self = order_server::get_instance();
-					TIME_MEASURE(T6t_OrderServer_TCP_write, self.logger_, self.time_str_);
-					if (status < 0) {
-						self.logger_.log("%:% %() % error writing data: %\n", __FILE__, __LINE__, __func__,
-							utils::get_curren_time_str(&self.time_str_), uv_strerror(status));
-						return;
-					}
-
-					self.logger_.log("%:% %() % send data to socket\n", __FILE__, __LINE__, __func__,
-						utils::get_curren_time_str(&self.time_str_));
-					auto* conn = static_cast<tcp_connection_t*>(req->handle->data);
-					conn->next_send_valid_index_ = 0;
-				});
-			}
-
-			response_queue->next_read_index();
-			++next_outgoing_seq_num;
-		}
-	};
-
-	process_responses(self.matching_engine_responses_, self.client_next_outgoing_seq_num_);
-	process_responses(&self.server_responses_, self.client_next_outgoing_seq_num_);
+auto kse::server::order_server::process_responses() -> void {
+	while (running_) {
+		process_responses_helper(server_responses_);
+		process_responses_helper(*matching_engine_responses_);
+	}
 }
 
 auto kse::server::on_check(uv_check_t* req [[maybe_unused]] ) -> void
 {
 	auto& self = order_server::get_instance();
-	if (self.fifo_sequencer_.is_empty())[[unlikely]] {
+	if (self.fifo_sequencer_.is_empty()) {
 		return;
 	}
+
 	START_MEASURE(Exchange_FIFOSequencer_sequenceAndPublish);
 	self.fifo_sequencer_.sequence_and_publish();
 	END_MEASURE(Exchange_FIFOSequencer_sequenceAndPublish, self.logger_, self.time_str_);
 }
-

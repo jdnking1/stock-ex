@@ -178,7 +178,7 @@ namespace kse::utils {
 				push_value(l);
 			}
 #endif
-			
+
 		}
 
 
@@ -216,6 +216,13 @@ namespace kse::utils {
 				}
 				push_value(*s++);
 			}
+		}
+
+		template<typename T, typename... A>
+		auto debug_log(const char* s [[maybe_unused]], const T& value [[maybe_unused]], A... args [[maybe_unused]] ) noexcept {
+#ifndef NDEBUG
+			log(s, value, args...);
+#endif
 		}
 
 	private:
