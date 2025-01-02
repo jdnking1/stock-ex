@@ -133,4 +133,4 @@ The system consists of the following main threads:
 - The project is intended for educational purposes and may contain bugs.  
 
 ## License
-This project is licensed under [Your Chosen License, e.g., MIT].
+This project is licensed under MIT.
