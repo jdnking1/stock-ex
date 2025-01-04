@@ -1,6 +1,6 @@
 # KSE (King Stock Exchange)
 
-KSE is a stock exchange simulator written in C++ designed for educational purposes. It supports core trading functionalities such as adding, canceling, and modifying limit orders using a FIFO matching algorithm. The system processes client orders over TCP and provides real-time market data via UDP multicast.
+KSE is a stock exchange simulator written in C++ for educational purposes. It supports core trading functionalities such as adding, canceling, and modifying limit orders using a FIFO matching algorithm. The system processes client orders over TCP and provides real-time market data via UDP multicast.
 
 ## Features
 
