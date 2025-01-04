@@ -128,8 +128,6 @@ The system consists of the following main threads:
 - Logs for performance data are included in the accompanying files.  
 
 ## Limitations
-- Many magic numbers and hardcoded configuration values.  
-- Code is currently not optimized for readability.  
 - The project is intended for educational purposes and may contain bugs.  
 
 ## License
