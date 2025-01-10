@@ -1,8 +1,6 @@
 #pragma once
 
-
 #include <atomic>
-
 #include <string>
 #include <thread>
 #include <vector>
@@ -13,7 +11,7 @@ namespace kse::utils {
 	template<typename T>
 	class lock_free_queue {
 	public:
-		explicit lock_free_queue(size_t size) : data_(size, T()) {}
+		explicit lock_free_queue(size_t size) : data_{size, T()} {}
 
 		lock_free_queue(const lock_free_queue&) = delete;
 
@@ -51,9 +49,5 @@ namespace kse::utils {
 		size_t next_write_index_ = 0;
 		size_t next_read_index_ = 0;
 		std::atomic<size_t> num_elements_ = 0;
-
-
 	};
-
 }
-

@@ -1,10 +1,10 @@
 #pragma once 
 
+#include <cstring>
+
+#include "utils/utils.hpp"
 #include "models/client_response.hpp"
 #include "models/client_request.hpp"
-#include "utils/utils.hpp"
-
-
 
 namespace kse::server {
 	inline void serialize_client_request(

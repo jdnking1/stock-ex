@@ -38,6 +38,7 @@ auto kse::example::gateway::on_read(uv_stream_t* stream, ssize_t nread, const uv
 		uv_close((uv_handle_t*)stream, nullptr);
 	}
 	else if (nread > 0) {
+		TIME_MEASURE(T2_OrderGateway_TCP_read, self.get_logger(), self.get_time_str());
 		conn->next_rcv_valid_index_ += nread;
 
 		self.get_logger().log("%:% %() % read socket: len:%\n", __FILE__, __LINE__, __func__,
@@ -112,12 +113,13 @@ auto kse::example::gateway::order_gateway::send_request() -> void
 		uv_buf_t buf = uv_buf_init(connection_->outbound_data_.data(), static_cast<unsigned int>(connection_->next_send_valid_index_));
 		uv_write(writer, (uv_stream_t*)connection_->handle_, &buf, 1, [](uv_write_t* req, int status) {
 			auto& self = order_gateway::get_instance();
-			if (status < 0) {
+			if (status < 0) [[unlikely]] {
 				self.logger_.log("%:% %() % error writing data: %\n", __FILE__, __LINE__, __func__,
 					utils::get_curren_time_str(&self.time_str_), uv_strerror(status));
 				return;
 			}
-
+			
+			TIME_MEASURE(T1_OrderGateway_TCP_write, self.logger_, self.time_str_);
 			self.logger_.log("%:% %() % send data to exchange\n", __FILE__, __LINE__, __func__,
 				utils::get_curren_time_str(&self.time_str_));
 

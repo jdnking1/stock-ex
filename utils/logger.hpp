@@ -2,17 +2,15 @@
 
 #include <atomic>
 #include <cstdint>
-
 #include <cstring>
 #include <string>
 #include <fstream>
 #include <thread>
+
 #include "utils.hpp"
 #include "lock_free_queue.hpp"
 
-
 namespace kse::utils {
-
 	using namespace std::literals::chrono_literals;
 
 	constexpr size_t LOG_QUEUE_SIZE = 256 * 1024;
@@ -49,7 +47,7 @@ namespace kse::utils {
 	class logger {
 	public:
 		explicit logger(const std::string& file_name)
-			: file_name_(file_name), log_queue_(LOG_QUEUE_SIZE) {
+			: file_name_{file_name}, log_queue_{LOG_QUEUE_SIZE} {
 			file_.open(file_name);
 			ASSERT(file_.is_open(), "Could not open log file:" + file_name);
 			worker_ = create_thread(-1, [this]() { flush_queue(); });
@@ -180,7 +178,6 @@ namespace kse::utils {
 #endif
 
 		}
-
 
 		auto push_value(const std::string& value) noexcept {
 			push_value(value.c_str());

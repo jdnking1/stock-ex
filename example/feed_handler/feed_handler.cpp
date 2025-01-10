@@ -27,6 +27,7 @@ inline auto kse::example::market_data::on_read(uv_udp_t* handle, ssize_t nread, 
 		uv_close((uv_handle_t*)handle, nullptr);
 	}
 	else if (nread > 0) {
+		TIME_MEASURE(T3_MarketDataConsumer_UDP_read, self.get_logger(), time_str);
 		conn->offset += nread;
 
 		self.get_logger().log("%:% %() % read socket: len:% \n", __FILE__, __LINE__, __func__,

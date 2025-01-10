@@ -1,5 +1,7 @@
 #pragma once 
 
+#include <cstddef>
+
 namespace kse::models {	
 	/// Maximum instrustruments traded on the exchange.
 	constexpr size_t MAX_NUM_INSTRUMENTS = 8;

@@ -1,6 +1,13 @@
 #pragma once
 
+#include "utils/utils.hpp"
+#include "utils/logger.hpp"
+
+#include "models/client_request.hpp"
+
 #include <algorithm>
+#include <array>
+#include <string>
 
 namespace kse::server
 {
@@ -39,7 +46,6 @@ namespace kse::server
 
 			logger_->debug_log("%:% %() % Processing % requests.\n", __FILE__, __LINE__, __func__, utils::get_curren_time_str(&time_str_), pending_size_);
 
-			
 			std::sort(pending_client_requests_.begin(), pending_client_requests_.begin() + pending_size_);
 
 			for (size_t i = 0; i < pending_size_; ++i) {
