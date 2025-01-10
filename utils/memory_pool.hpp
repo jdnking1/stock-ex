@@ -1,8 +1,7 @@
 #pragma once
 
-#include <vector>
-
 #include <limits>
+#include <vector>
 
 #include "utils.hpp"
 
@@ -10,11 +9,10 @@ namespace kse::utils {
 	template<typename T>
 	class memory_pool {
 	public:
-		explicit memory_pool(size_t size): memory_blocks_(size), free_block_count_(size) {
+		explicit memory_pool(size_t size): memory_blocks_{size}, free_block_count_{size} {
 			for (size_t i = 0; i < size - 1; ++i) {
 				memory_blocks_[i].next_free_block_ = i + 1;
 			}
-
 			memory_blocks_[size - 1].next_free_block_ = std::numeric_limits<size_t>::max();
 			ASSERT(reinterpret_cast<const memory_block*>(&(memory_blocks_[0].data_)) == &(memory_blocks_[0]), "T object should be first member of ObjectBlock.");
 		}
@@ -75,7 +73,7 @@ namespace kse::utils {
 	template<typename T>
 	class uv_memory_pool {
 	public:
-		explicit uv_memory_pool(size_t size) : memory_blocks_(size), free_block_count_(size) {
+		explicit uv_memory_pool(size_t size) : memory_blocks_{size}, free_block_count_{size} {
 			for (size_t i = 0; i < size - 1; ++i) {
 				memory_blocks_[i].next_free_block_ = i + 1;
 			}

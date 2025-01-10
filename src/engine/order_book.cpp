@@ -1,10 +1,8 @@
 #include "order_book.hpp"
 
-#include "fmt/format.h"
-
 #include <algorithm>
 
-
+#include "fmt/format.h"
 
 namespace kse::engine {
 	order_book::order_book(models::instrument_id_t instrument_id, utils::logger* logger, message_handler* message_handler)

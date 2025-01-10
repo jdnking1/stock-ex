@@ -1,10 +1,10 @@
 #pragma once
 
-
 #include <array>
 #include <functional>
 #include <memory>
 #include <string>
+
 #include "models/constants.hpp"
 #include "models/client_response.hpp"
 #include "models/market_update.hpp"
@@ -65,11 +65,16 @@ namespace kse::engine {
 		auto get_new_market_order_id() noexcept -> models::order_id_t { 
 			return next_market_order_id_++; 
 		}
-		auto price_to_index(models::price_t price) const noexcept { return price % models::MAX_PRICE_LEVELS; }
+
+		auto price_to_index(models::price_t price) const noexcept { 
+			return price % models::MAX_PRICE_LEVELS; 
+		}
+
 		auto get_price_level(models::side_t side, models::price_t price) const noexcept -> models::price_level* { 
 			auto* price_level = price_levels_.at(price_to_index(price));
 			return price_level && price_level->side_ == side ? price_level : nullptr;
 		}
+
 		auto get_order_priority_at_price_level(models::side_t side, models::price_t price) const noexcept -> models::priority_t {
 			const auto* orders_at_price_level = get_price_level(side, price);
 			return orders_at_price_level ? orders_at_price_level->first_order_->priority_ + 1 : 1;
@@ -79,8 +84,7 @@ namespace kse::engine {
 			price_levels_.at(price_to_index(new_price_level->price_)) = new_price_level;
 
 			auto*& best_price_level = new_price_level->side_ == models::side_t::BUY ? bid_ : ask_;
-
-
+			
 			const auto comparison_func = [](models::price_t a, models::price_t b, models::side_t side) {
 				return side == models::side_t::BUY ? a > b : a < b;
 			};

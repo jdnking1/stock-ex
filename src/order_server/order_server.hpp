@@ -112,6 +112,7 @@ namespace kse::server {
 			running_ = true;
 			auto order_server_thread = utils::create_thread(0, [this]() { run(); });
 			auto order_server_response_thread = utils::create_thread(4, [this]() { process_responses(); });
+			utils::ASSERT(order_server_thread.joinable() && order_server_response_thread.joinable(), "Failed to create threads");
 			order_server_thread.detach();
 			order_server_response_thread.detach();
 		}
@@ -246,7 +247,6 @@ namespace kse::server {
 				}
 			}
 		}
-
 
 		auto process_responses_helper(models::client_response_queue& responses) -> void {
 			std::string time;

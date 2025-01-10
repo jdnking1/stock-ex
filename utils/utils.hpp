@@ -155,7 +155,6 @@ namespace kse::utils {
 		return is_big_endian() ? value : swap_bytes_64(value);
 	}
 
-
 	inline uint16_t from_big_endian_16(uint16_t value) {
 		return is_big_endian() ? value : swap_bytes_16(value);
 	}

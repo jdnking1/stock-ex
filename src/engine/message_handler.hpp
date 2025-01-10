@@ -2,11 +2,11 @@
 
 #include <string>
 
-#include "models/client_response.hpp"
-#include "models/market_update.hpp"
-
 #include "utils/logger.hpp"
 #include "utils/utils.hpp"
+
+#include "models/client_response.hpp"
+#include "models/market_update.hpp"
 
 namespace kse::engine {
 	class message_handler {
