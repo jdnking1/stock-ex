@@ -44,6 +44,7 @@ add_subdirectory(deps/fmt)
 add_subdirectory(example)
 add_subdirectory(utils)
 add_subdirectory(src)
+add_subdirectory(bench)
 add_subdirectory(test)
 
 add_executable(kse src/main.cpp)

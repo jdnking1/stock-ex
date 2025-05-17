@@ -52,20 +52,18 @@ int main(int, char** argv) {
 
 		std::random_device rd;
 		std::mt19937 gen(rd());
-		std::uniform_int_distribution<> dis_price(100, 199);
-		std::uniform_int_distribution<> dis_below_price(50, 90);
-		std::uniform_int_distribution<> dis_qty(1, 100);
-		std::uniform_int_distribution<> dis_side(0, 99);
-		std::uniform_int_distribution<> dis_instrument(0, kse::models::MAX_NUM_INSTRUMENTS - 1);
-		std::uniform_int_distribution<> dis_offset(1, 10);
-		std::uniform_int_distribution<> dis_probability(1, 100); // For 30% chance
+		std::uniform_int_distribution dis_price(100, 199);
+		std::uniform_int_distribution dis_below_price(50, 90);
+		std::uniform_int_distribution dis_qty(1, 100);
+		std::uniform_int_distribution dis_side(0, 99);
+		std::uniform_int_distribution<kse::models::instrument_id_t> dis_instrument(0, kse::models::MAX_NUM_INSTRUMENTS - 1);
+		std::uniform_int_distribution dis_offset(1, 10);
+		std::uniform_int_distribution dis_probability(1, 100); // For 30% chance
 
-		// Initialize base prices for instruments
 		for (size_t i = 0; i < kse::models::MAX_NUM_INSTRUMENTS; ++i) {
 			instrument_base_price[i] = dis_price(gen);
 		}
-
-		// Main order generation loop
+		
 		for (size_t i = 0; i < 100; ++i) {
 			const kse::models::instrument_id_t instrument_id = static_cast<kse::models::instrument_id_t>(dis_instrument(gen));
 			const kse::models::price_t trend_adjustment = (i % 2 == 0) ? 1 : -1;

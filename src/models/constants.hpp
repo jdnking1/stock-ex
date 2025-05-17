@@ -16,7 +16,7 @@ namespace kse::models {
 	constexpr size_t MAX_NUM_CLIENTS = 10;
 
 	/// Maximum number of orders
-	constexpr size_t MAX_NUM_ORDERS = 2048;
+	constexpr size_t MAX_NUM_ORDERS = 10000002;
 
 	/// Maximum price level depth in the order books.
 	constexpr size_t MAX_PRICE_LEVELS = 256;
