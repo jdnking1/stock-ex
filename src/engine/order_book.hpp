@@ -89,7 +89,7 @@ namespace kse::engine {
 				return side == models::side_t::BUY ? a > b : a < b;
 			};
 
-			const auto add_after = [](models::price_level* current, models::price_level* new_price_level) noexcept {
+			const auto add_at_the_end = [](models::price_level* current, models::price_level* new_price_level) noexcept {
 				new_price_level->next_entry_ = current->next_entry_;
 				new_price_level->prev_entry_ = current;
 				current->next_entry_->prev_entry_ = new_price_level;
@@ -103,7 +103,7 @@ namespace kse::engine {
 				current->prev_entry_ = new_price_level;
 			};
 
-			if (!best_price_level) [[unlikely]] {
+			if (!best_price_level) {
 				best_price_level = new_price_level;
 				best_price_level->next_entry_ = best_price_level->prev_entry_ = best_price_level;
 			}
@@ -113,17 +113,17 @@ namespace kse::engine {
 				best_price_level = new_price_level;
 			}
 			else {
-				auto add_after_flag = false;
+				auto add_at_the_end_flag = false;
 				auto current_price_level = best_price_level->next_entry_;
 
-				while (!add_after_flag && !comparison_func(new_price_level->price_, current_price_level->price_, new_price_level->side_)) {
+				while (!add_at_the_end_flag && !comparison_func(new_price_level->price_, current_price_level->price_, new_price_level->side_)) {
 					current_price_level = current_price_level->next_entry_;
-					if (current_price_level->next_entry_ == best_price_level)
-						add_after_flag = true;
+					if (current_price_level == best_price_level)
+						add_at_the_end_flag = true;
 				}
 
-				if (add_after_flag) {
-					add_after(current_price_level, new_price_level);
+				if (add_at_the_end_flag) {
+					add_at_the_end(best_price_level->prev_entry_, new_price_level);
 				}
 				else {
 					add_before(current_price_level, new_price_level);
@@ -134,10 +134,6 @@ namespace kse::engine {
 		auto remove_price_level(models::side_t side, models::price_t price) noexcept -> void {
 			auto *orders_at_price_level = get_price_level(side, price);
 			auto*& best_price_level = side == models::side_t::BUY ? bid_ : ask_;
-
-			if (!orders_at_price_level) [[unlikely]] {
-				return;
-			}
 			
 			if (orders_at_price_level->next_entry_ == orders_at_price_level) {
 				best_price_level = nullptr;

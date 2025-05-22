@@ -26,8 +26,8 @@ namespace kse::engine {
 		message_handler& operator=(message_handler&&) = delete;
 
 		auto send_client_response(const models::client_response_internal& client_response) noexcept -> void {
-			logger_->log("%:% %() % Sending %\n", __FILE__, __LINE__, __func__,
-				utils::get_curren_time_str(&time_str_), client_response.to_string());
+			//logger_->log("%:% %() % Sending %\n", __FILE__, __LINE__, __func__,
+				//utils::get_curren_time_str(&time_str_), client_response.to_string());
 			auto* next_write = outgoing_responses_->get_next_write_element();
 			*next_write = client_response;
 			outgoing_responses_->next_write_index();
@@ -35,8 +35,8 @@ namespace kse::engine {
 		}
 
 		auto send_market_update(const models::market_update& market_update) noexcept -> void {
-			logger_->log("%:% %() % Sending %\n", __FILE__, __LINE__, __func__,
-				utils::get_curren_time_str(&time_str_), market_update.to_string());
+			//logger_->log("%:% %() % Sending %\n", __FILE__, __LINE__, __func__,
+				//utils::get_curren_time_str(&time_str_), market_update.to_string());
 			auto* next_write = outgoing_market_updates_->get_next_write_element();
 			*next_write = market_update;
 			outgoing_market_updates_->next_write_index();

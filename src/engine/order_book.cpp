@@ -39,11 +39,7 @@ namespace kse::engine {
 
 		if (order_to_match_with.qty_ == 0)
 		{
-			market_update_ = { models::market_update_type::CANCEL, order_to_match_with.market_order_id_, instrument_id_, order_to_match_with.side_, order_to_match_with.price_, order_to_match_with_old_qty, order_to_match_with.priority_ };
-			message_handler_->send_market_update(market_update_);
-			START_MEASURE(Exchange_MEOrderBook_removeOrder);
-			remove_order(&order_to_match_with);
-			END_MEASURE(Exchange_MEOrderBook_removeOrder, (*logger_), time_str_);
+			cancel(order_to_match_with.client_id_, order_to_match_with.client_order_id_);
 		}
 		else {
 			market_update_ = { models::market_update_type::MODIFY, order_to_match_with.market_order_id_, instrument_id_, order_to_match_with.side_, order_to_match_with.price_, order_to_match_with.qty_ , order_to_match_with.priority_ };
@@ -115,45 +111,47 @@ namespace kse::engine {
 
 	auto order_book::cancel(models::client_id_t client_id, models::order_id_t client_order_id) noexcept -> void
 	{
-		auto is_cancelable = client_id < client_orders_.size();
-		models::order* order = nullptr;
-		if (is_cancelable) [[likely]] {
-			auto client_orders = client_orders_.at(client_id);
-			order = client_orders.at(client_order_id);
-			is_cancelable = order != nullptr;
-		}
+		auto& client_orders = client_orders_[client_id];
+		auto* order = client_orders[client_order_id];
 
-		if(!is_cancelable) [[unlikely]] {
-			client_response_ = { models::client_response_type::CANCEL_REJECTED, client_id, instrument_id_, client_order_id, models::INVALID_ORDER_ID, models::side_t::INVALID, models::INVALID_PRICE, models::INVALID_QUANTITY, models::INVALID_QUANTITY};
-			message_handler_->send_client_response(client_response_);
-		}
-		else {
-			client_response_ = { models::client_response_type::CANCELED, client_id, instrument_id_, client_order_id, order->market_order_id_, order->side_, order->price_, models::INVALID_QUANTITY, order->qty_ };
-			market_update_ = { models::market_update_type::CANCEL, order->market_order_id_, instrument_id_, order->side_, order->price_, 0, order->priority_ };
-			START_MEASURE(Exchange_MEOrderBook_removeOrder);
-			remove_order(order);
-			END_MEASURE(Exchange_MEOrderBook_removeOrder, (*logger_), time_str_);
-			message_handler_->send_client_response(client_response_);
-			message_handler_->send_market_update(market_update_);
-		}
+		client_response_ = {
+			models::client_response_type::CANCELED,
+			client_id,
+			instrument_id_,
+			client_order_id,
+			order->market_order_id_,
+			order->side_,
+			order->price_,
+			models::INVALID_QUANTITY,
+			order->qty_
+		};
+
+		market_update_ = {
+			models::market_update_type::CANCEL,
+			order->market_order_id_,
+			instrument_id_,
+			order->side_,
+			order->price_,
+			0,
+			order->priority_
+		};
+
+		START_MEASURE(Exchange_MEOrderBook_removeOrder);
+		remove_order(order);
+		END_MEASURE(Exchange_MEOrderBook_removeOrder, (*logger_), time_str_);
+
+		message_handler_->send_client_response(client_response_);
+		message_handler_->send_market_update(market_update_);
+		
+
 	}
 
 	auto order_book::modify(models::client_id_t client_id, models::order_id_t client_order_id, models::price_t new_price, models::quantity_t new_quantity) noexcept -> void
 	{
-		auto is_modifiable = client_id < client_orders_.size();
-		models::order* order = nullptr;
+		auto& client_orders = client_orders_[client_id];
+		auto* order = client_orders[client_order_id];
 
-		if (is_modifiable) [[likely]] {
-			auto client_orders = client_orders_.at(client_id);
-			order = client_orders.at(client_order_id);
-			is_modifiable = order != nullptr;
-		}
-
-		if (!is_modifiable) [[unlikely]] {
-			client_response_ = { models::client_response_type::MODIFY_REJECTED, client_id, instrument_id_, client_order_id, models::INVALID_ORDER_ID, models::side_t::INVALID, models::INVALID_PRICE, models::INVALID_QUANTITY, models::INVALID_QUANTITY };
-			message_handler_->send_client_response(client_response_);
-		}
-		else if(order->price_ != new_price || order->qty_ < new_quantity ) {
+		if(order->price_ != new_price || order->qty_ < new_quantity ) {
 			cancel(client_id, client_order_id);
 			add(client_id, client_order_id, order->side_, new_price, new_quantity);
 		}

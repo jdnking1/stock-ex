@@ -27,7 +27,7 @@ namespace kse::utils {
 
 		template<typename... Args>
 		T* alloc(Args&&... args) noexcept {
-			DEBUG_ASSERT(free_block_count_ > 0, "No free memory blocks.");
+			ASSERT(free_block_count_ > 0, "No free memory blocks.");
 			auto* memory_block = &memory_blocks_[free_block_index_];
 			DEBUG_ASSERT(memory_block->is_free_, "Memory block is not free.");
 			memory_block->is_free_ = false;
@@ -40,9 +40,9 @@ namespace kse::utils {
 
 		void free(T* ptr) noexcept {
 			size_t block_index = reinterpret_cast<const memory_block*>(ptr) - &memory_blocks_[0];
-			DEBUG_ASSERT(block_index < memory_blocks_.size() , "Invalid memory block index.");
+			ASSERT(block_index < memory_blocks_.size() , "Invalid memory block index.");
 			auto* memory_block = &memory_blocks_[block_index];
-			DEBUG_ASSERT(!memory_block->is_free_, "Memory block is already free.");
+			ASSERT(!memory_block->is_free_, "Memory block is already free.");
 			memory_block->is_free_ = true;
 			memory_block->next_free_block_ = free_block_index_;
 			free_block_index_ = block_index;

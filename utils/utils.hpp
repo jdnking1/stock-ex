@@ -178,8 +178,9 @@ namespace kse::utils {
 	}
 #endif
 
+#ifndef NDEBUG
 
-#define START_MEASURE(TAG) const auto TAG = kse::utils::rdtsc()
+#define START_MEASURE(TAG)  const auto TAG = kse::utils::rdtsc()
 
 #define END_MEASURE(TAG, LOGGER, STR) \
 	do { \
@@ -193,5 +194,10 @@ namespace kse::utils {
 		const auto TAG = kse::utils::get_current_timestamp();                                           \
 		LOGGER.log("% TTT "#TAG" %\n",  kse::utils::get_curren_time_str(&STR), TAG);           \
 	  } while(false)
+#else 
+	#define START_MEASURE(TAG) 
+	#define END_MEASURE(TAG, LOGGER, STR)
+	#define TIME_MEASURE(TAG, LOGGER, STR)
+#endif
 }
 
